@@ -42,19 +42,7 @@ This plugin is optimized for and currently uses the AI image editing service pro
 
 ## Configuration
 
-`config/plugins.ts`
-
-```ts
-export default () => ({
-  // ...
-  imagiterate: {
-    enabled: true,
-  },
-  // ...
-});
-```
-
-Then, add environment configuration values:
+1. Add environment configuration values:
 
 `.env`
 
@@ -66,15 +54,32 @@ REPLICATE_API_TOKEN=r8_HrsCGGANKqOTmmJQhsbpIHBNMBOfHwz9JMaiQ
 REPLICATE_AI_MODEL=black-forest-labs/flux-kontext-pro
 ```
 
-Then, you'll need to build your server endpoints:
+2. Then set up your Strapi plugins config file to use those values. Note the addition of { env} as a function argument. And make sure you merge these config values in with whatever other plugins you are also running.
 
-```sh
-# Using Yarn
-yarn build
+`config/plugins.ts`
 
-# Or using PNPM
-pnpm build
-
-# Or using NPM
-npm run build
 ```
+export default ({ env }) => ({
+	'imagiterate': {
+		enabled: true,
+		config: {
+		  replicateApiToken: env('REPLICATE_API_TOKEN'),
+		  replicateAiModel: env('REPLICATE_AI_MODEL'),
+		},
+	},
+});
+```
+
+## Permissions
+
+Access and permissions for Imagiterate API endpoints is managed through Strapi. You can create a dedicated API token in Strapi and use that in your API calls. Enable both `iterate` and `upload` controller actions.
+
+Alternatively you can grant access by editing the User & Permissions Plugin Roles to allow access to Imagiterate API endpoints. Enable both `iterate` and `upload` controller actions.
+
+## Costs
+
+AI is not cheap. Replicate charges $0.04 per image output for the `black-forest-labs/flux-kontext-pro` AI model. This is an excellent model, but beware of costs accumulating.
+
+## Disclaimer
+
+Solspace, Inc. is not responsible for any costs incurred through your use of Imagirate and its integration with the Replicate AI service.
