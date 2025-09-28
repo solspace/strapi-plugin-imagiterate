@@ -21,7 +21,10 @@
     }
   },
   "files": [
-    "dist"
+	"server",
+	"dist",
+	"package.json",
+	"README.md"
   ],
   "scripts": {
     "build": "strapi-plugin build",
