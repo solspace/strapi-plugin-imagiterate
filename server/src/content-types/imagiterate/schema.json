@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "imagiterate",
+  "info": {
+    "singularName": "imagiterate",
+    "pluralName": "imagiterates",
+    "displayName": "Imagiterate Uploads"
+  },
+  "options": {
+    "comment": ""
+  },
+  "attributes": {
+    "originalImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"]
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": ["images"]
+    },
+    "token": {
+      "type": "string"
+    }
+  }
+}

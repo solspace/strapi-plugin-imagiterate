@@ -1,0 +1,63 @@
+{
+  "version": "0.0.1",
+  "name": "strapi-plugin-imagiterate",
+  "description": "Prompt an AI to iterate on uploaded images and save them to Strapi's backend.",
+  "license": "MIT",
+  "author": "Solspace <support@solspace.com>",
+  "keywords": ["strapi", "plugin", "imagiterate", "AI", "AI images", "AI image editing"],
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solspace/strapi-plugin-imagiterate.git"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-server": {
+      "source": "./server/src/index.js",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify",
+    "format": "prettier . --write"
+  },
+  "dependencies": {
+    "@strapi/design-system": "^2.0.0-rc.29",
+    "@strapi/icons": "^2.0.0-rc.29",
+    "react-intl": "^7.1.11",
+    "replicate": "^1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@strapi/strapi": "^5.23.6",
+    "@strapi/sdk-plugin": "^5.3.2",
+    "prettier": "^3.6.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1",
+    "styled-components": "^6.1.19"
+  },
+  "peerDependencies": {
+    "@strapi/strapi": "^5.23.6",
+    "@strapi/sdk-plugin": "^5.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1",
+    "styled-components": "^6.1.19"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "imagiterate",
+    "displayName": "Imagiterate",
+    "description": "Prompt an AI to iterate on uploaded images and save them to Strapi's backend."
+  }
+}
