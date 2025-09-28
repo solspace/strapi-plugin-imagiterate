@@ -15,6 +15,7 @@
     }
   },
   "options": {
+	"draftAndPublish": false,
     "comment": ""
   },
   "attributes": {
