@@ -1,5 +1,7 @@
-import imagiterate from './imagiterate';
+'use strict';
 
-export default {
-  imagiterate,
+const imagiterate = require('./imagiterate');
+
+module.exports = {
+    imagiterate,
 };
