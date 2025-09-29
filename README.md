@@ -15,13 +15,13 @@ To install this plugin, you need to add an NPM dependency to your Strapi applica
 
 ```sh
 # Using Yarn
-yarn add strapi-plugin-imagiterate
+yarn add @solspace/strapi-plugin-imagiterate
 
 # Or using PNPM
-pnpm add strapi-plugin-imagiterate
+pnpm add @solspace/strapi-plugin-imagiterate
 
 # Or using NPM
-npm install strapi-plugin-imagiterate
+npm install @solspace/strapi-plugin-imagiterate
 ```
 
 ## How it works
