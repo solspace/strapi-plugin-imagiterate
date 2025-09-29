@@ -1,9 +1,9 @@
-import fs from 'fs/promises';
-import path from 'path';
-import mime from 'mime-types';
-import { v4 as uuidv4 } from 'uuid';
-import { validate as uuidValidate } from 'uuid';
-import Replicate from 'replicate';
+import fs from "fs/promises";
+import path from "path";
+import mime from "mime-types";
+import { v4 as uuidv4 } from "uuid";
+import { validate as uuidValidate } from "uuid";
+import Replicate from "replicate";
 
 const upload = ({ strapi }) => ({
   async uploadImage(ctx) {
@@ -14,8 +14,9 @@ const upload = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingPrompt',
-          message: 'Please provide a prompt to guide the AI in processing your image.',
+          name: "MissingPrompt",
+          message:
+            "Please provide a prompt to guide the AI in processing your image.",
         },
       };
     }
@@ -27,8 +28,8 @@ const upload = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingImage',
-          message: 'Please upload an image.',
+          name: "MissingImage",
+          message: "Please upload an image.",
         },
       };
     }
@@ -40,33 +41,22 @@ const upload = ({ strapi }) => ({
     //console.log('uploaded', uploadedFile);
 
     // Query
-    let create = await strapi.documents('plugin::imagiterate.imagiterate').create({
-      data: {
-        originalImage: uploadedFile[0].id,
-        token: uuidv4(),
-      }
-    });
+    let create = await strapi
+      .documents("plugin::imagiterate.imagiterate")
+      .create({
+        data: {
+          originalImage: uploadedFile[0].id,
+          token: uuidv4(),
+        },
+      });
     if (create.error) return create;
-
-    /*
-    const fakeImages = [
-      'http://localhost:1337/uploads/steven_cordes_Exo0_AZ_Aye_M8_unsplash_c2cbe9f625.jpg',
-      'http://localhost:1337/uploads/celine_chamiot_poncet_DH_9_U5x8d_Ym_U_unsplash_205cff5701.jpg',
-      'http://localhost:1337/uploads/nick_van_den_berg_6x387_K_M_Wt_I_unsplash_87ae6e75ab.jpg',
-    ];
-    const randomImage = fakeImages[Math.floor(Math.random() * fakeImages.length)];
-  */
 
     //  Set the document id of the collection entry
     const documentId = create.documentId;
 
-    // Get the local file path for images uploaded to the public dir.
-    const strapiPath = strapi.config.get('server.dirs.public');
-
-    //  Now fetch a buffer and base64 of the image back out of the file system
-    const filePath = path.join(strapiPath, uploadedFile[0].url);
-    let buffer = await fs.readFile(filePath);
-    const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
+    //  Fetch the image
+    const base64Image = await getBase64Image(uploadedFile[0].url);
+    if (base64Image.error) return base64Image;
 
     //  Instantiate Replicate
     const { replicate, model } = getReplicate();
@@ -78,8 +68,6 @@ const upload = ({ strapi }) => ({
       prompt,
     };
     const output = await replicate.run(model, { input });
-    
-    console.log('replicate output', output);
 
     //  Error?
     if (output.error) return output;
@@ -92,34 +80,38 @@ const upload = ({ strapi }) => ({
     if (newUploadedFile.error) return newUploadedFile;
 
     // Query
-    const update = await strapi.documents('plugin::imagiterate.imagiterate').update({
-      documentId,
-      data: {
-        images: [newUploadedFile[0].id],
-      },
-    });
+    const update = await strapi
+      .documents("plugin::imagiterate.imagiterate")
+      .update({
+        documentId,
+        data: {
+          images: [newUploadedFile[0].id],
+        },
+      });
     if (update.error) return update;
 
-    return { ...update, url: output.url(), alt: 'Alt text', prompt };
+    return { ...update, url: output.url(), alt: "Alt text", prompt };
   },
 });
 
 //  Service loader
 const getUploadService = () => {
-  return strapi.plugin('upload').service('upload');
+  return strapi.plugin("upload").service("upload");
 };
 
 //  Replicate api loader for clean error handling
 const getReplicate = () => {
-  const token = strapi.plugin('imagiterate').config('replicateApiToken') || null;
-  const model = strapi.plugin('imagiterate').config('replicateAiModel') || null;
+  const token =
+    strapi.plugin("imagiterate").config("replicateApiToken") || null;
+  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
 
   if (!token) {
     return {
       error: {
         status: 500,
-        name: 'MissingReplicateToken',
-        message: 'Please provide a valid API token for the Replicate AI service.',
+        name: "MissingReplicateToken",
+        message:
+          "Please provide a valid API token for the Replicate AI service.",
       },
     };
   }
@@ -128,8 +120,8 @@ const getReplicate = () => {
     return {
       error: {
         status: 500,
-        name: 'MissingReplicateApiModel',
-        message: 'Please provide a valid model for the Replicate AI service.',
+        name: "MissingReplicateApiModel",
+        message: "Please provide a valid model for the Replicate AI service.",
       },
     };
   }
@@ -153,16 +145,17 @@ async function uploadImage(file) {
   return uploadedFile;
 }
 
+//	Upload blob
 async function uploadBlob(blob) {
   // Convert blob → buffer
   const buffer = Buffer.from(await blob.arrayBuffer());
 
   // Resolve file extension from MIME type
-  const mimeType = blob.type || 'application/octet-stream';
-  const ext = mime.extension(mimeType) || 'jpg';
+  const mimeType = blob.type || "application/octet-stream";
+  const ext = mime.extension(mimeType) || "jpg";
 
   // Write buffer to a temp file
-  const strapiPath = strapi.config.get('server.dirs.public');
+  const strapiPath = strapi.config.get("server.dirs.public");
   const fileName = `/uploads/replicate-${Date.now()}.${ext}`;
   const filePath = path.join(strapiPath, fileName);
   await fs.writeFile(filePath, buffer);
@@ -171,7 +164,7 @@ async function uploadBlob(blob) {
   const stats = await fs.stat(filePath);
   const file = {
     filepath: filePath,
-    originalFilename: 'replicate-ai-file',
+    originalFilename: "replicate-ai-file",
     mimetype: mimeType,
     size: stats.size,
   };
@@ -183,6 +176,39 @@ async function uploadBlob(blob) {
   await fs.unlink(filePath);
 
   return uploadedFile;
+}
+
+//	Get base 64 image
+async function getBase64Image(imageUrl) {
+  //  Handle both local and remote urls
+  if (imageUrl.startsWith("http")) {
+    // Remote fetch
+    const imageResponse = await fetch(imageUrl);
+
+    if (!imageResponse.ok) {
+      return {
+        error: {
+          status: 500,
+          name: "FailedImageFetchImage",
+          message:
+            "Please to fetch image from remote server. " + response.statusText,
+        },
+      };
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
+
+    return base64Image;
+  } else {
+    // Local read
+    const strapiPath = strapi.config.get("server.dirs.public");
+    const filePath = path.join(strapiPath, imageUrl);
+    const buffer = await fs.readFile(filePath);
+    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
+
+    return base64Image;
+  }
 }
 
 export default upload;

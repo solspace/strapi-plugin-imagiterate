@@ -15,7 +15,7 @@
     }
   },
   "options": {
-	"draftAndPublish": false,
+    "draftAndPublish": false,
     "comment": ""
   },
   "attributes": {

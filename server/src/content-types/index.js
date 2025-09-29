@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-const imagiterate = require('./imagiterate');
+const imagiterate = require("./imagiterate");
 
 module.exports = {
-    imagiterate,
+  imagiterate,
 };

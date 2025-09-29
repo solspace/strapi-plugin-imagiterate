@@ -1,5 +1,5 @@
-import iterate from './iterate';
-import upload from './upload';
+import iterate from "./iterate";
+import upload from "./upload";
 
 export default {
   iterate,

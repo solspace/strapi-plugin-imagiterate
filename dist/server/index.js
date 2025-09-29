@@ -10991,7 +10991,10 @@ const iterate = ({ strapi: strapi2 }) => ({
     const blob = await output.blob();
     const newUploadedFile = await uploadBlob$1(blob);
     if (newUploadedFile.error) return newUploadedFile;
-    const mergedImages = [...imageDocument.images.map((img) => img.id), newUploadedFile[0].id];
+    const mergedImages = [
+      ...imageDocument.images.map((img) => img.id),
+      newUploadedFile[0].id
+    ];
     const update = await strapi2.documents("plugin::imagiterate.imagiterate").update({
       documentId,
       data: {
@@ -11090,10 +11093,8 @@ const upload = ({ strapi: strapi2 }) => ({
     });
     if (create.error) return create;
     const documentId = create.documentId;
-    const strapiPath = strapi2.config.get("server.dirs.public");
-    const filePath = path__default.default.join(strapiPath, uploadedFile[0].url);
-    let buffer = await fs__default.default.readFile(filePath);
-    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
+    const base64Image = await getBase64Image(uploadedFile[0].url);
+    if (base64Image.error) return base64Image;
     const { replicate, model } = getReplicate();
     if (replicate.error) return replicate;
     const input = {
@@ -11101,7 +11102,6 @@ const upload = ({ strapi: strapi2 }) => ({
       prompt
     };
     const output = await replicate.run(model, { input });
-    console.log("replicate output", output);
     if (output.error) return output;
     const blob = await output.blob();
     const newUploadedFile = await uploadBlob(blob);
@@ -11171,6 +11171,29 @@ async function uploadBlob(blob) {
   const uploadedFile = await uploadImage(file);
   await fs__default.default.unlink(filePath);
   return uploadedFile;
+}
+async function getBase64Image(imageUrl) {
+  if (imageUrl.startsWith("http")) {
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      return {
+        error: {
+          status: 500,
+          name: "FailedImageFetchImage",
+          message: "Please to fetch image from remote server. " + response.statusText
+        }
+      };
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
+    return base64Image;
+  } else {
+    const strapiPath = strapi.config.get("server.dirs.public");
+    const filePath = path__default.default.join(strapiPath, imageUrl);
+    const buffer = await fs__default.default.readFile(filePath);
+    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
+    return base64Image;
+  }
 }
 const services = {
   iterate,

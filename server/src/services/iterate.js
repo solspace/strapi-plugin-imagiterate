@@ -1,9 +1,9 @@
-import fs from 'fs/promises';
-import path from 'path';
-import mime from 'mime-types';
-import { v4 as uuidv4 } from 'uuid';
-import { validate as uuidValidate } from 'uuid';
-import Replicate from 'replicate';
+import fs from "fs/promises";
+import path from "path";
+import mime from "mime-types";
+import { v4 as uuidv4 } from "uuid";
+import { validate as uuidValidate } from "uuid";
+import Replicate from "replicate";
 
 const iterate = ({ strapi }) => ({
   async refineImage(ctx) {
@@ -14,8 +14,8 @@ const iterate = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingDocumentId',
-          message: 'Please provide a document id.',
+          name: "MissingDocumentId",
+          message: "Please provide a document id.",
         },
       };
     }
@@ -25,8 +25,9 @@ const iterate = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingPrompt',
-          message: 'Please provide a prompt to guide the AI in processing your image.',
+          name: "MissingPrompt",
+          message:
+            "Please provide a prompt to guide the AI in processing your image.",
         },
       };
     }
@@ -36,8 +37,8 @@ const iterate = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingImageUrl',
-          message: 'Please provide an image url for the AI to process.',
+          name: "MissingImageUrl",
+          message: "Please provide an image url for the AI to process.",
         },
       };
     }
@@ -47,8 +48,8 @@ const iterate = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'MissingToken',
-          message: 'Please provide a valid token.',
+          name: "MissingToken",
+          message: "Please provide a valid token.",
         },
       };
     }
@@ -57,29 +58,31 @@ const iterate = ({ strapi }) => ({
       return {
         error: {
           status: 500,
-          name: 'InvalidTokenFormat',
-          message: 'Please provide a token in a valid format.',
+          name: "InvalidTokenFormat",
+          message: "Please provide a token in a valid format.",
         },
       };
     }
 
     // Query
-    let imageDocument = await strapi.documents('plugin::imagiterate.imagiterate').findOne({
-      documentId,
-      populate: ['images']
-    });
+    let imageDocument = await strapi
+      .documents("plugin::imagiterate.imagiterate")
+      .findOne({
+        documentId,
+        populate: ["images"],
+      });
     if (imageDocument.error) return imageDocument;
 
     if (token != imageDocument.token) {
       return {
         error: {
           status: 500,
-          name: 'InvalidToken',
-          message: 'Please provide a valid token.',
+          name: "InvalidToken",
+          message: "Please provide a valid token.",
         },
       };
     }
-/*
+    /*
     const fakeImages = [
       'http://localhost:1337/uploads/steven_cordes_Exo0_AZ_Aye_M8_unsplash_c2cbe9f625.jpg',
       'http://localhost:1337/uploads/celine_chamiot_poncet_DH_9_U5x8d_Ym_U_unsplash_205cff5701.jpg',
@@ -110,37 +113,44 @@ const iterate = ({ strapi }) => ({
     if (newUploadedFile.error) return newUploadedFile;
 
     //  Merge new image into images array
-    const mergedImages = [...imageDocument.images.map((img) => img.id), newUploadedFile[0].id];
+    const mergedImages = [
+      ...imageDocument.images.map((img) => img.id),
+      newUploadedFile[0].id,
+    ];
 
     // Query
-    const update = await strapi.documents('plugin::imagiterate.imagiterate').update({
-      documentId,
-      data: {
-        images: mergedImages,
-      },
-    });
+    const update = await strapi
+      .documents("plugin::imagiterate.imagiterate")
+      .update({
+        documentId,
+        data: {
+          images: mergedImages,
+        },
+      });
     if (update.error) return update;
 
-    return { ...imageDocument, url: output.url(), alt: 'Alt text', prompt };
+    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
   },
 });
 
 //  Service loader
 const getUploadService = () => {
-  return strapi.plugin('upload').service('upload');
+  return strapi.plugin("upload").service("upload");
 };
 
 //  Replicate api loader for clean error handling
 const getReplicate = () => {
-  const token = strapi.plugin('imagiterate').config('replicateApiToken') || null;
-  const model = strapi.plugin('imagiterate').config('replicateAiModel') || null;
+  const token =
+    strapi.plugin("imagiterate").config("replicateApiToken") || null;
+  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
 
   if (!token) {
     return {
       error: {
         status: 500,
-        name: 'MissingReplicateToken',
-        message: 'Please provide a valid API token for the Replicate AI service.',
+        name: "MissingReplicateToken",
+        message:
+          "Please provide a valid API token for the Replicate AI service.",
       },
     };
   }
@@ -149,8 +159,8 @@ const getReplicate = () => {
     return {
       error: {
         status: 500,
-        name: 'MissingReplicateApiModel',
-        message: 'Please provide a valid model for the Replicate AI service.',
+        name: "MissingReplicateApiModel",
+        message: "Please provide a valid model for the Replicate AI service.",
       },
     };
   }
@@ -179,11 +189,11 @@ async function uploadBlob(blob) {
   const buffer = Buffer.from(await blob.arrayBuffer());
 
   // Resolve file extension from MIME type
-  const mimeType = blob.type || 'application/octet-stream';
-  const ext = mime.extension(mimeType) || 'jpg';
+  const mimeType = blob.type || "application/octet-stream";
+  const ext = mime.extension(mimeType) || "jpg";
 
   // Write buffer to a temp file
-  const strapiPath = strapi.config.get('server.dirs.public');
+  const strapiPath = strapi.config.get("server.dirs.public");
   const fileName = `/uploads/replicate-${Date.now()}.${ext}`;
   const filePath = path.join(strapiPath, fileName);
   await fs.writeFile(filePath, buffer);
@@ -192,7 +202,7 @@ async function uploadBlob(blob) {
   const stats = await fs.stat(filePath);
   const file = {
     filepath: filePath,
-    originalFilename: 'replicate-ai-file',
+    originalFilename: "replicate-ai-file",
     mimetype: mimeType,
     size: stats.size,
   };
