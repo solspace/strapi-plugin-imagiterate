@@ -11180,11 +11180,11 @@ async function getBase64Image(imageUrl) {
         error: {
           status: 500,
           name: "FailedImageFetchImage",
-          message: "Please to fetch image from remote server. " + response.statusText
+          message: "Please to fetch image from remote server. " + imageResponse.statusText
         }
       };
     }
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
     const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
     return base64Image;
   } else {
