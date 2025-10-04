@@ -74,7 +74,54 @@ export default ({ env }) => ({
 
 Access and permissions for Imagiterate API endpoints is managed through Strapi. You can create a dedicated API token in Strapi and use that in your API calls. Enable both `iterate` and `upload` controller actions.
 
-Alternatively you can grant access by editing the User & Permissions Plugin Roles to allow access to Imagiterate API endpoints. Enable both `iterate` and `upload` controller actions.
+It is strongly recommended that you not enable API access through User & Permissions Plugin Roles.
+
+## API
+
+There are two API endpoints for Imagiterate; Upload and Iterate. The upload endpoint takes the original image file along with a prompt. That original image is edited, saved to the Strapi backend and returned along with some other data. The iterate endpoint receives an image url and a prompt and edits the given image. That new image is saved to the Strapi backend and returned with additional data.
+
+### Upload
+
+`POST /api/imagiterate/upload`
+
+The `upload` endpoint expects [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData).
+
+```
+	const formData = new FormData();
+	formData.append("image", originalImageFile);
+	formData.append("prompt", currentPrompt);
+```
+
+Two values are expected:
+
+- image
+  - The contents of 'image' will be the equivalent of the contents of an HTML form input field of type 'file' with a name of 'image'.
+- prompt
+  - The 'prompt' is a string that describes the edits to make to a submitted image.
+
+The `upload` method creates a new entry in the Imagiterate Uploads collection. It returns that object in a standard Strapi API response for a [Document Service findOne()](https://docs.strapi.io/cms/api/document-service#findone) call with some additions.
+
+- token
+  - Imagiterate generates a unique token after each valid API call. This new token is expected to be provided in the next API call.
+- url
+  - The edited image is available through this url.
+- prompt
+  - The submitted AI prompt is returned for reference.
+
+### Iterate
+
+`POST /api/imagiterate/iterate`
+
+The `iterate` endpoint expects a standard POST request payload. Four values are required:
+
+- documentId
+  - This is the Imagiterate Uploads collection document id. Subsequent iteration images get attached to the initial Imagiterate Uploads document.
+- url
+  - This is the new image created from the image submitted in the 'url' argument.
+- prompt
+  - The submitted AI prompt is returned for reference.
+- token
+  - This is the random UUID token provided in the previous Imagiterate API response.
 
 ## Costs
 

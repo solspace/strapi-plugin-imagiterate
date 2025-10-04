@@ -13,7 +13,7 @@ const iterate = ({ strapi }) => ({
     if (!documentId) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingDocumentId",
           message: "Please provide a document id.",
         },
@@ -24,7 +24,7 @@ const iterate = ({ strapi }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message:
             "Please provide a prompt to guide the AI in processing your image.",
@@ -36,7 +36,7 @@ const iterate = ({ strapi }) => ({
     if (!url) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImageUrl",
           message: "Please provide an image url for the AI to process.",
         },
@@ -47,7 +47,7 @@ const iterate = ({ strapi }) => ({
     if (!token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingToken",
           message: "Please provide a valid token.",
         },
@@ -57,7 +57,7 @@ const iterate = ({ strapi }) => ({
     if (!uuidValidate(token)) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidTokenFormat",
           message: "Please provide a token in a valid format.",
         },
@@ -76,7 +76,7 @@ const iterate = ({ strapi }) => ({
     if (token != imageDocument.token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidToken",
           message: "Please provide a valid token.",
         },
@@ -147,7 +147,7 @@ const getReplicate = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message:
           "Please provide a valid API token for the Replicate AI service.",
@@ -158,7 +158,7 @@ const getReplicate = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service.",
       },

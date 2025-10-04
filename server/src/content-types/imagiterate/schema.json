@@ -31,6 +31,10 @@
     },
     "token": {
       "type": "string"
+    },
+    "AI": {
+      "type": "customField",
+      "customField": "plugin::imagiterate.imagiterateField"
     }
   }
 }

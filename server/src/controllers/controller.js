@@ -11,6 +11,12 @@ const controller = ({ strapi }) => ({
       .service("upload")
       .uploadImage(ctx);
   },
+  async getDocument(ctx) {
+    ctx.body = await strapi
+      .plugin("imagiterate")
+      .service("document")
+      .getDocument(ctx);
+  },
 });
 
 export default controller;

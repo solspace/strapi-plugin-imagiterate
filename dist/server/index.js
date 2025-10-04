@@ -11,7 +11,13 @@ const bootstrap = ({ strapi: strapi2 }) => {
 };
 const destroy = ({ strapi: strapi2 }) => {
 };
+const PLUGIN_ID = "imagiterate";
 const register = ({ strapi: strapi2 }) => {
+  strapi2.customFields.register({
+    name: "imagiterateField",
+    plugin: PLUGIN_ID,
+    type: "string"
+  });
 };
 const config = {
   default: ({ env }) => ({
@@ -60,6 +66,10 @@ const attributes = {
   },
   token: {
     type: "string"
+  },
+  AI: {
+    type: "customField",
+    customField: "plugin::imagiterate.imagiterateField"
   }
 };
 const require$$0$1 = {
@@ -85,6 +95,9 @@ const controller = ({ strapi: strapi2 }) => ({
   },
   async upload(ctx) {
     ctx.body = await strapi2.plugin("imagiterate").service("upload").uploadImage(ctx);
+  },
+  async getDocument(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("document").getDocument(ctx);
   }
 });
 const controllers = {
@@ -92,6 +105,17 @@ const controllers = {
 };
 const middlewares = {};
 const policies = {};
+const adminAPIRoutes = [
+  {
+    method: "GET",
+    path: "/get-document",
+    handler: "controller.getDocument",
+    config: {
+      auth: false,
+      policies: []
+    }
+  }
+];
 const contentAPIRoutes = [
   {
     method: "POST",
@@ -111,11 +135,35 @@ const contentAPIRoutes = [
   }
 ];
 const routes = {
+  "admin-action": {
+    type: "admin",
+    routes: adminAPIRoutes
+  },
   "content-api": {
     type: "content-api",
     routes: contentAPIRoutes
   }
 };
+const document = ({ strapi: strapi2 }) => ({
+  async getDocument(ctx) {
+    const { documentId } = ctx.request.query;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["originalImage", "images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    return { ...imageDocument };
+  }
+});
 var mimeTypes = {};
 const require$$0 = {
   "application/1d-interleaved-parityfec": {
@@ -10924,7 +10972,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!documentId) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingDocumentId",
           message: "Please provide a document id."
         }
@@ -10933,7 +10981,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message: "Please provide a prompt to guide the AI in processing your image."
         }
@@ -10942,7 +10990,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!url) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImageUrl",
           message: "Please provide an image url for the AI to process."
         }
@@ -10951,7 +10999,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingToken",
           message: "Please provide a valid token."
         }
@@ -10960,7 +11008,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!uuid.validate(token)) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidTokenFormat",
           message: "Please provide a token in a valid format."
         }
@@ -10974,7 +11022,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (token != imageDocument.token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidToken",
           message: "Please provide a valid token."
         }
@@ -11014,7 +11062,7 @@ const getReplicate$1 = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message: "Please provide a valid API token for the Replicate AI service."
       }
@@ -11023,7 +11071,7 @@ const getReplicate$1 = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service."
       }
@@ -11067,7 +11115,7 @@ const upload = ({ strapi: strapi2 }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message: "Please provide a prompt to guide the AI in processing your image."
         }
@@ -11077,7 +11125,7 @@ const upload = ({ strapi: strapi2 }) => ({
     if (!files.image) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImage",
           message: "Please upload an image."
         }
@@ -11125,7 +11173,7 @@ const getReplicate = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message: "Please provide a valid API token for the Replicate AI service."
       }
@@ -11134,7 +11182,7 @@ const getReplicate = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service."
       }
@@ -11178,7 +11226,7 @@ async function getBase64Image(imageUrl) {
     if (!imageResponse.ok) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "FailedImageFetchImage",
           message: "Please to fetch image from remote server. " + imageResponse.statusText
         }
@@ -11196,6 +11244,7 @@ async function getBase64Image(imageUrl) {
   }
 }
 const services = {
+  document,
   iterate,
   upload
 };
@@ -11212,3 +11261,4 @@ const index = {
   services
 };
 module.exports = index;
+//# sourceMappingURL=index.js.map

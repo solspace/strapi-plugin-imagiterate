@@ -1,5 +1,11 @@
+import { PLUGIN_ID } from "/admin/src/pluginId";
+
 const register = ({ strapi }) => {
-  // register phase
+  strapi.customFields.register({
+    name: "imagiterateField",
+    plugin: PLUGIN_ID,
+    type: "string",
+  });
 };
 
 export default register;

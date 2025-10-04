@@ -13,7 +13,7 @@ const upload = ({ strapi }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message:
             "Please provide a prompt to guide the AI in processing your image.",
@@ -27,7 +27,7 @@ const upload = ({ strapi }) => ({
     if (!files.image) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImage",
           message: "Please upload an image.",
         },
@@ -108,7 +108,7 @@ const getReplicate = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message:
           "Please provide a valid API token for the Replicate AI service.",
@@ -119,7 +119,7 @@ const getReplicate = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service.",
       },
@@ -188,10 +188,11 @@ async function getBase64Image(imageUrl) {
     if (!imageResponse.ok) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "FailedImageFetchImage",
           message:
-            "Please to fetch image from remote server. " + imageResponse.statusText,
+            "Please to fetch image from remote server. " +
+            imageResponse.statusText,
         },
       };
     }
