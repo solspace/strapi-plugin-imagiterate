@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import { validate, v4 } from "uuid";
 import Replicate from "replicate";
+import { validate, v4 } from "uuid";
 const bootstrap = ({ strapi: strapi2 }) => {
 };
 const destroy = ({ strapi: strapi2 }) => {
@@ -91,8 +91,14 @@ const controller = ({ strapi: strapi2 }) => ({
   async upload(ctx) {
     ctx.body = await strapi2.plugin("imagiterate").service("upload").uploadImage(ctx);
   },
+  async adminIterate(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("adminIterate").refineImage(ctx);
+  },
   async getDocument(ctx) {
     ctx.body = await strapi2.plugin("imagiterate").service("document").getDocument(ctx);
+  },
+  async saveImage(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("document").saveImage(ctx);
   }
 });
 const controllers = {
@@ -105,6 +111,24 @@ const adminAPIRoutes = [
     method: "GET",
     path: "/get-document",
     handler: "controller.getDocument",
+    config: {
+      auth: false,
+      policies: []
+    }
+  },
+  {
+    method: "POST",
+    path: "/admin-iterate",
+    handler: "controller.adminIterate",
+    config: {
+      auth: false,
+      policies: []
+    }
+  },
+  {
+    method: "POST",
+    path: "/save-image",
+    handler: "controller.saveImage",
     config: {
       auth: false,
       policies: []
@@ -139,26 +163,6 @@ const routes = {
     routes: contentAPIRoutes
   }
 };
-const document = ({ strapi: strapi2 }) => ({
-  async getDocument(ctx) {
-    const { documentId } = ctx.request.query;
-    if (!documentId) {
-      return {
-        error: {
-          status: 400,
-          name: "MissingDocumentId",
-          message: "Please provide a document id."
-        }
-      };
-    }
-    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
-      documentId,
-      populate: ["originalImage", "images"]
-    });
-    if (imageDocument.error) return imageDocument;
-    return { ...imageDocument };
-  }
-});
 var mimeTypes = {};
 const require$$0 = {
   "application/1d-interleaved-parityfec": {
@@ -10961,6 +10965,142 @@ var mimeDb = require$$0;
   }
 })(mimeTypes);
 const mime = /* @__PURE__ */ getDefaultExportFromCjs(mimeTypes);
+const adminIterate = ({ strapi: strapi2 }) => ({
+  async refineImage(ctx) {
+    const { documentId, prompt, url, token } = ctx.request.body;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    if (!prompt) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingPrompt",
+          message: "Please provide a prompt to guide the AI in processing your image."
+        }
+      };
+    }
+    if (!url) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingImageUrl",
+          message: "Please provide an image url for the AI to process."
+        }
+      };
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    const { replicate, model } = getReplicate$2();
+    if (replicate.error) return replicate;
+    const input = {
+      input_image: url,
+      prompt
+    };
+    const output = await replicate.run(model, { input });
+    if (output.error) return output;
+    const blob = await output.blob();
+    const newUploadedFile = await uploadBlob$2(blob);
+    if (newUploadedFile.error) return newUploadedFile;
+    const mergedImages = [
+      ...imageDocument.images.map((img) => img.id),
+      newUploadedFile[0].id
+    ];
+    const update = await strapi2.documents("plugin::imagiterate.imagiterate").update({
+      documentId,
+      data: {
+        images: mergedImages
+      }
+    });
+    if (update.error) return update;
+    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+  }
+});
+const getUploadService$2 = () => {
+  return strapi.plugin("upload").service("upload");
+};
+const getReplicate$2 = () => {
+  const token = strapi.plugin("imagiterate").config("replicateApiToken") || null;
+  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
+  if (!token) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateToken",
+        message: "Please provide a valid API token for the Replicate AI service."
+      }
+    };
+  }
+  if (!model) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateApiModel",
+        message: "Please provide a valid model for the Replicate AI service."
+      }
+    };
+  }
+  const replicate = new Replicate({
+    auth: token
+  });
+  return { replicate, model };
+};
+async function uploadImage$2(file) {
+  const uploadService = getUploadService$2();
+  const uploadedFile = await uploadService.upload({
+    data: {},
+    files: file
+  });
+  return uploadedFile;
+}
+async function uploadBlob$2(blob) {
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  const mimeType = blob.type || "application/octet-stream";
+  const ext = mime.extension(mimeType) || "jpg";
+  const strapiPath = strapi.config.get("server.dirs.public");
+  const fileName = `/uploads/replicate-${Date.now()}.${ext}`;
+  const filePath = path.join(strapiPath, fileName);
+  await fs.writeFile(filePath, buffer);
+  const stats = await fs.stat(filePath);
+  const file = {
+    filepath: filePath,
+    originalFilename: "replicate-ai-file",
+    mimetype: mimeType,
+    size: stats.size
+  };
+  const uploadedFile = await uploadImage$2(file);
+  await fs.unlink(filePath);
+  return uploadedFile;
+}
+const document = ({ strapi: strapi2 }) => ({
+  async getDocument(ctx) {
+    const { documentId } = ctx.request.query;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["originalImage", "images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    return { ...imageDocument };
+  }
+});
 const iterate = ({ strapi: strapi2 }) => ({
   async refineImage(ctx) {
     const { documentId, prompt, url, token } = ctx.request.body;
@@ -11239,6 +11379,7 @@ async function getBase64Image(imageUrl) {
   }
 }
 const services = {
+  adminIterate,
   document,
   iterate,
   upload
