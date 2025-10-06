@@ -10,6 +10,9 @@ import {
   CardHeader,
   CardBody,
   CardSubtitle,
+  CarouselInput,
+  CarouselSlide,
+  CarouselImage,
   Field,
   Flex,
   Textarea,
@@ -40,6 +43,7 @@ export const Input = React.forwardRef((props, ref) => {
 
   const [images, setImages] = React.useState([]);
   const [activeImageIndex, setActiveImageIndex] = React.useState(0);
+  const [enlargedImage, setEnlargedImage] = React.useState(null);
   const [prompt, setPrompt] = React.useState("");
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [modalState, setModalState] = React.useState("closed");
@@ -153,7 +157,7 @@ export const Input = React.forwardRef((props, ref) => {
       const data = await res.json();
       console.log("[v0] Iterate response:", data);
 
-      setResultImage(data.imageUrl);
+      setResultImage(data.base64Image);
       setResultReasoning(data.reasoning);
       setModalState("success");
     } catch (err) {
@@ -228,33 +232,29 @@ export const Input = React.forwardRef((props, ref) => {
         <Card>
           <CardHeader>
             <Typography fontWeight="bold">
-              {formatMessage({
-                id: getTranslation("imagiterate.imagiterateField.label"),
-                defaultMessage: "Imagiterate AIs",
-              })}
+              <Language id="imagiterateAi" />
             </Typography>
           </CardHeader>
           <CardSubtitle>
             <Typography>
-              {formatMessage({
-                id: getTranslation("imagiterate.imagiterateField.subtitle"),
-                defaultMessage: "",
-              })}
+              <Language id="subtitle" />
             </Typography>
           </CardSubtitle>
 
           <CardBody>
-            <Grid.Root gap={4}>
+            <Grid.Root
+              gap={4}
+              style={{ alignItems: "stretch", minHeight: "300px" }}
+            >
               {/* Left column: Carousel */}
-              <Grid.Item col={6} xs={12}>
-                <Box>
-                  <Typography
-                    variant="sigma"
-                    fontWeight="bold"
-                    marginBottom={2}
-                  >
-                    Images
-                  </Typography>
+              <Grid.Item col={7} xs={12}>
+                <Box
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxHeight: "500px",
+                  }}
+                >
                   {images.length === 0 ? (
                     <Box
                       background="neutral100"
@@ -269,84 +269,58 @@ export const Input = React.forwardRef((props, ref) => {
                       }}
                     >
                       <Typography variant="omega" textColor="neutral600">
-                        No images available. Upload an image to get started.
+                        <Language id="noImagesAvailable" />
                       </Typography>
                     </Box>
                   ) : (
-                    <Box>
-                      {/* Image display */}
-                      <Box
-                        background="neutral100"
-                        hasRadius
-                        style={{
-                          position: "relative",
-                          width: "100%",
-                          paddingBottom: "75%",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <img
-                          src={
-                            images[activeImageIndex].url || "/placeholder.svg"
-                          }
-                          alt={
-                            images[activeImageIndex].alternativeText ||
-                            `Image ${activeImageIndex + 1}`
-                          }
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain",
-                          }}
-                        />
-                      </Box>
-
-                      {/* Carousel controls */}
-                      <Flex
-                        justifyContent="space-between"
-                        alignItems="center"
-                        marginTop={2}
-                      >
-                        <Button
-                          variant="tertiary"
-                          size="S"
-                          onClick={() =>
-                            setActiveImageIndex((prev) =>
-                              prev > 0 ? prev - 1 : images.length - 1,
-                            )
-                          }
-                          disabled={isProcessing || images.length <= 1}
+                    <CarouselInput
+                      label={`Imagiterate images (${activeImageIndex + 1}/${images.length})`}
+                      selectedSlide={activeImageIndex}
+                      previousLabel="Previous slide"
+                      nextLabel="Next slide"
+                      onNext={() =>
+                        setActiveImageIndex((prev) =>
+                          prev < images.length - 1 ? prev + 1 : 0,
+                        )
+                      }
+                      onPrevious={() =>
+                        setActiveImageIndex((prev) =>
+                          prev > 0 ? prev - 1 : images.length - 1,
+                        )
+                      }
+                      // remove actions to drop the edit/link/delete/publish bar
+                      style={{ width: "100%" }}
+                    >
+                      {images.map((img, index) => (
+                        <CarouselSlide
+                          key={img.id || index}
+                          label={`${index + 1} of ${images.length} slides`}
+                          style={{ height: "100%" }}
                         >
-                          Previous
-                        </Button>
-                        <Typography variant="pi" textColor="neutral600">
-                          {activeImageIndex + 1} / {images.length}
-                        </Typography>
-                        <Button
-                          variant="tertiary"
-                          size="S"
-                          onClick={() =>
-                            setActiveImageIndex((prev) =>
-                              prev < images.length - 1 ? prev + 1 : 0,
-                            )
-                          }
-                          disabled={isProcessing || images.length <= 1}
-                        >
-                          Next
-                        </Button>
-                      </Flex>
-                    </Box>
+                          <Box
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setEnlargedImage(img.url)}
+                          >
+                            <CarouselImage
+                              src={img.url || "/placeholder.svg"}
+                              alt={img.alternativeText || `Image ${index + 1}`}
+                            />
+                          </Box>
+                        </CarouselSlide>
+                      ))}
+                    </CarouselInput>
                   )}
                 </Box>
               </Grid.Item>
 
               {/* Right column: Prompt */}
-              <Grid.Item col={6} xs={12}>
-                <Box>
-                  <Field.Label>Prompt</Field.Label>
+              <Grid.Item col={5} xs={12}>
+                <Box
+                  style={{ width: "100%", height: "100%", maxHeight: "500px" }}
+                >
+                  <Field.Label>
+                    <Language id="prompt" />
+                  </Field.Label>
                   <Textarea
                     ref={ref}
                     aria-label={formatMessage({
@@ -357,11 +331,10 @@ export const Input = React.forwardRef((props, ref) => {
                     value={prompt}
                     disabled={disabled || isProcessing || images.length === 0}
                     required={required}
-                    placeholder={
-                      placeholder ||
-                      "Enter a prompt to modify the active image..."
-                    }
+                    placeholder={placeholder || <Language id="enterAPrompt" />}
                     onChange={handlePromptChange}
+                    rows={10}
+                    style={{ width: "100%" }}
                   />
                   <Box marginTop={2}>
                     <Button
@@ -371,7 +344,7 @@ export const Input = React.forwardRef((props, ref) => {
                       }
                       loading={isProcessing}
                     >
-                      Submit
+                      <Language id="submit" />
                     </Button>
                   </Box>
                 </Box>
@@ -389,9 +362,9 @@ export const Input = React.forwardRef((props, ref) => {
           <Modal.Content>
             <Modal.Header>
               <Modal.Title>
-                {modalState === "loading" && "Processing Image..."}
-                {modalState === "success" && "Image Modified"}
-                {modalState === "error" && "Error"}
+                {modalState === "loading" && <Language id="processingImage" />}
+                {modalState === "success" && <Language id="aiModifiedImage" />}
+                {modalState === "error" && <Language id="error" />}
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -400,7 +373,8 @@ export const Input = React.forwardRef((props, ref) => {
                   {/* Timer */}
                   <Flex justifyContent="center" marginBottom={4}>
                     <Typography variant="omega" textColor="neutral600">
-                      Time elapsed: {formatElapsedTime(elapsedTime)}
+                      <Language id="timeElapsed" />:{" "}
+                      {formatElapsedTime(elapsedTime)}
                     </Typography>
                   </Flex>
 
@@ -465,9 +439,9 @@ export const Input = React.forwardRef((props, ref) => {
                       fontWeight="bold"
                       marginBottom={2}
                     >
-                      AI Reasoning
+                      <Language id="yourPrompt" />:{" "}
                     </Typography>
-                    <Typography variant="omega">{resultReasoning}</Typography>
+                    <Typography variant="omega">{prompt}</Typography>
                   </Box>
                 </Box>
               )}
@@ -486,12 +460,46 @@ export const Input = React.forwardRef((props, ref) => {
                   <Button variant="tertiary" onClick={handleCloseModal}>
                     Dismiss
                   </Button>
-                  <Button onClick={handleSaveImage}>Save to Collection</Button>
+                  <Button onClick={handleSaveImage}>
+                    <Language id="save" />
+                  </Button>
                 </>
               )}
               {modalState === "error" && (
-                <Button onClick={handleCloseModal}>Close</Button>
+                <Button onClick={handleCloseModal}>
+                  <Language id="close" />
+                </Button>
               )}
+            </Modal.Footer>
+          </Modal.Content>
+        </Modal.Root>
+      )}
+
+      {enlargedImage && (
+        <Modal.Root open onOpenChange={() => setEnlargedImage(null)}>
+          <Modal.Content>
+            <Modal.Header>
+              <Modal.Title>
+                <Language id="enlargedImage" />
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Box style={{ width: "100%", textAlign: "center" }}>
+                <img
+                  src={enlargedImage}
+                  alt="Enlarged"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "80vh",
+                    borderRadius: "4px",
+                  }}
+                />
+              </Box>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onClick={() => setEnlargedImage(null)}>
+                <Language id="close" />
+              </Button>
             </Modal.Footer>
           </Modal.Content>
         </Modal.Root>
@@ -510,3 +518,23 @@ export const Input = React.forwardRef((props, ref) => {
     </Field.Root>
   );
 });
+
+// Helper: convert camelCase or idString into sentence case
+const toSentenceCase = (str) => {
+  if (!str) return "";
+  // Insert space before capital letters and lowercase the rest
+  const withSpaces = str
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ");
+  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+};
+
+//	Language translating component
+const Language = ({ id }) => {
+  const { formatMessage } = useIntl();
+
+  return formatMessage({
+    id: getTranslation(`imagiterate.imagiterateField.${id}`),
+    defaultMessage: toSentenceCase(id),
+  });
+};

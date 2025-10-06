@@ -82,14 +82,6 @@ const iterate = ({ strapi }) => ({
         },
       };
     }
-    /*
-    const fakeImages = [
-      'http://localhost:1337/uploads/steven_cordes_Exo0_AZ_Aye_M8_unsplash_c2cbe9f625.jpg',
-      'http://localhost:1337/uploads/celine_chamiot_poncet_DH_9_U5x8d_Ym_U_unsplash_205cff5701.jpg',
-      'http://localhost:1337/uploads/nick_van_den_berg_6x387_K_M_Wt_I_unsplash_87ae6e75ab.jpg',
-    ];
-    const randomImage = fakeImages[Math.floor(Math.random() * fakeImages.length)];
-*/
 
     //  Instantiate Replicate
     const { replicate, model } = getReplicate();

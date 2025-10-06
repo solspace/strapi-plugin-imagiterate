@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import mime from "mime-types";
 import Replicate from "replicate";
+import { getBase64Image } from "./utils";
 
 const adminIterate = ({ strapi }) => ({
   async refineImage(ctx) {
@@ -41,6 +42,16 @@ const adminIterate = ({ strapi }) => ({
       };
     }
 
+    //	If the image url is relative, we need to generate a base64 version to send to Replicate
+    let base64Image;
+
+    if (!url.startsWith("http")) {
+      base64Image = await getBase64Image(url);
+      if (base64Image.error) {
+        return base64Image;
+      }
+    }
+
     // Query
     let imageDocument = await strapi
       .documents("plugin::imagiterate.imagiterate")
@@ -50,13 +61,24 @@ const adminIterate = ({ strapi }) => ({
       });
     if (imageDocument.error) return imageDocument;
 
+    const fakeImages = [
+      "http://localhost:1337/uploads/jordan_rohloff_0w_WS_It20m_T4_unsplash_9bde4f0ef1.jpg",
+      "http://localhost:1337/uploads/lorri_thomasson_g_Q7_ABP_3xj_L0_unsplash_1bf74aaf92.jpg",
+      "http://localhost:1337/uploads/replicate_ai_file_252bce9042.png",
+    ];
+    const randomImage =
+      fakeImages[Math.floor(Math.random() * fakeImages.length)];
+    base64Image = await getBase64Image(randomImage);
+
+    return { base64Image, url: randomImage, alt: "Alt text", prompt };
+
     //  Instantiate Replicate
     const { replicate, model } = getReplicate();
     if (replicate.error) return replicate;
 
     //  Now send it to Replicate for processing.
     const input = {
-      input_image: url,
+      input_image: base64Image || url,
       prompt,
     };
     const output = await replicate.run(model, { input });
@@ -64,31 +86,10 @@ const adminIterate = ({ strapi }) => ({
     //  Error?
     if (output.error) return output;
 
-    //  Return image url
-    const blob = await output.blob();
+    //	Prepare base64 of the resulting image so that we can show the image in the Strapi admin without CORS errors
+    base64Image = await getBase64Image(output.url());
 
-    //  Upload
-    const newUploadedFile = await uploadBlob(blob);
-    if (newUploadedFile.error) return newUploadedFile;
-
-    //  Merge new image into images array
-    const mergedImages = [
-      ...imageDocument.images.map((img) => img.id),
-      newUploadedFile[0].id,
-    ];
-
-    // Query
-    const update = await strapi
-      .documents("plugin::imagiterate.imagiterate")
-      .update({
-        documentId,
-        data: {
-          images: mergedImages,
-        },
-      });
-    if (update.error) return update;
-
-    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+    return { base64Image, url: output.url(), alt: "Alt text", prompt };
   },
 });
 

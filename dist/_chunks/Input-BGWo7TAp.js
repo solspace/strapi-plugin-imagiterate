@@ -14,10 +14,16 @@ function _interopNamespace(e) {
     for (const k in e) {
       if (k !== "default") {
         const d = Object.getOwnPropertyDescriptor(e, k);
-        Object.defineProperty(n, k, d.get ? d : {
-          enumerable: true,
-          get: () => e[k]
-        });
+        Object.defineProperty(
+          n,
+          k,
+          d.get
+            ? d
+            : {
+                enumerable: true,
+                get: () => e[k],
+              },
+        );
       }
     }
   }
@@ -36,7 +42,7 @@ const Input = React__namespace.forwardRef((props, ref) => {
     attribute,
     disabled,
     placeholder,
-    onChange
+    onChange,
   } = props;
   const field = admin.useField(name);
   const { formatMessage } = reactIntl.useIntl();
@@ -58,9 +64,9 @@ const Input = React__namespace.forwardRef((props, ref) => {
           `/imagiterate/get-document?documentId=${documentId}`,
           {
             headers: {
-              "Content-Type": "application/json"
-            }
-          }
+              "Content-Type": "application/json",
+            },
+          },
         );
         const data = await res.json();
         console.log("[v0] Document data:", data);
@@ -116,13 +122,13 @@ const Input = React__namespace.forwardRef((props, ref) => {
       const res = await fetch("/imagiterate/admin-iterate", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           prompt,
           documentId,
-          url: activeImage.url
-        })
+          url: activeImage.url,
+        }),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -146,12 +152,12 @@ const Input = React__namespace.forwardRef((props, ref) => {
       const res = await fetch("/imagiterate/save-image", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId,
-          imageUrl: resultImage
-        })
+          imageUrl: resultImage,
+        }),
       });
       if (!res.ok) {
         throw new Error("Failed to save image");
@@ -183,243 +189,410 @@ const Input = React__namespace.forwardRef((props, ref) => {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
-  return /* @__PURE__ */ jsxRuntime.jsxs(
-    designSystem.Field.Root,
-    {
-      name,
-      id: name,
-      error: field.error,
-      hint,
-      required,
-      children: [
-        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, { direction: "column", alignItems: "stretch", gap: 1, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { fontWeight: "bold", children: formatMessage({
-            id: getTranslation("imagiterate.imagiterateField.label"),
-            defaultMessage: "Imagiterate AIs"
-          }) }) }),
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardSubtitle, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { children: formatMessage({
-            id: getTranslation("imagiterate.imagiterateField.subtitle"),
-            defaultMessage: ""
-          }) }) }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.CardBody, { children: [
-            /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Root, { gap: 4, children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 6, xs: 12, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Typography,
-                  {
-                    variant: "sigma",
-                    fontWeight: "bold",
-                    marginBottom: 2,
-                    children: "Images"
-                  }
-                ),
-                images.length === 0 ? /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Box,
-                  {
-                    background: "neutral100",
-                    padding: 8,
-                    hasRadius: true,
-                    style: {
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: "300px"
-                    },
-                    children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", textColor: "neutral600", children: "No images available. Upload an image to get started." })
-                  }
-                ) : /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(
-                    designSystem.Box,
-                    {
-                      background: "neutral100",
-                      hasRadius: true,
-                      style: {
-                        position: "relative",
-                        width: "100%",
-                        paddingBottom: "75%",
-                        overflow: "hidden"
-                      },
-                      children: /* @__PURE__ */ jsxRuntime.jsx(
-                        "img",
+  return /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Field.Root, {
+    name,
+    id: name,
+    error: field.error,
+    hint,
+    required,
+    children: [
+      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, {
+        direction: "column",
+        alignItems: "stretch",
+        gap: 1,
+        children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, {
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, {
+              children: /* @__PURE__ */ jsxRuntime.jsx(
+                designSystem.Typography,
+                {
+                  fontWeight: "bold",
+                  children: formatMessage({
+                    id: getTranslation("imagiterate.imagiterateField.label"),
+                    defaultMessage: "Imagiterate AIs",
+                  }),
+                },
+              ),
+            }),
+            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardSubtitle, {
+              children: /* @__PURE__ */ jsxRuntime.jsx(
+                designSystem.Typography,
+                {
+                  children: formatMessage({
+                    id: getTranslation("imagiterate.imagiterateField.subtitle"),
+                    defaultMessage: "",
+                  }),
+                },
+              ),
+            }),
+            /* @__PURE__ */ jsxRuntime.jsxs(designSystem.CardBody, {
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Root, {
+                  gap: 4,
+                  children: [
+                    /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, {
+                      col: 6,
+                      xs: 12,
+                      children: /* @__PURE__ */ jsxRuntime.jsxs(
+                        designSystem.Box,
                         {
-                          src: images[activeImageIndex].url || "/placeholder.svg",
-                          alt: images[activeImageIndex].alternativeText || `Image ${activeImageIndex + 1}`,
-                          style: {
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain"
-                          }
-                        }
-                      )
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntime.jsxs(
-                    designSystem.Flex,
-                    {
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginTop: 2,
-                      children: [
-                        /* @__PURE__ */ jsxRuntime.jsx(
-                          designSystem.Button,
-                          {
-                            variant: "tertiary",
-                            size: "S",
-                            onClick: () => setActiveImageIndex(
-                              (prev) => prev > 0 ? prev - 1 : images.length - 1
+                          children: [
+                            /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Typography,
+                              {
+                                variant: "sigma",
+                                fontWeight: "bold",
+                                marginBottom: 2,
+                                children: "Images",
+                              },
                             ),
-                            disabled: isProcessing || images.length <= 1,
-                            children: "Previous"
-                          }
-                        ),
-                        /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Typography, { variant: "pi", textColor: "neutral600", children: [
-                          activeImageIndex + 1,
-                          " / ",
-                          images.length
-                        ] }),
-                        /* @__PURE__ */ jsxRuntime.jsx(
-                          designSystem.Button,
-                          {
-                            variant: "tertiary",
-                            size: "S",
-                            onClick: () => setActiveImageIndex(
-                              (prev) => prev < images.length - 1 ? prev + 1 : 0
-                            ),
-                            disabled: isProcessing || images.length <= 1,
-                            children: "Next"
-                          }
-                        )
-                      ]
-                    }
-                  )
-                ] })
-              ] }) }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 6, xs: 12, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Label, { children: "Prompt" }),
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Textarea,
-                  {
-                    ref,
-                    "aria-label": formatMessage({
-                      id: getTranslation("imagiterate.input.aria-label"),
-                      defaultMessage: "Imagiterate input"
+                            images.length === 0
+                              ? /* @__PURE__ */ jsxRuntime.jsx(
+                                  designSystem.Box,
+                                  {
+                                    background: "neutral100",
+                                    padding: 8,
+                                    hasRadius: true,
+                                    style: {
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      minHeight: "300px",
+                                    },
+                                    children: /* @__PURE__ */ jsxRuntime.jsx(
+                                      designSystem.Typography,
+                                      {
+                                        variant: "omega",
+                                        textColor: "neutral600",
+                                        children:
+                                          "No images available. Upload an image to get started.",
+                                      },
+                                    ),
+                                  },
+                                )
+                              : /* @__PURE__ */ jsxRuntime.jsxs(
+                                  designSystem.Box,
+                                  {
+                                    children: [
+                                      /* @__PURE__ */ jsxRuntime.jsx(
+                                        designSystem.Box,
+                                        {
+                                          background: "neutral100",
+                                          hasRadius: true,
+                                          style: {
+                                            position: "relative",
+                                            width: "100%",
+                                            paddingBottom: "75%",
+                                            overflow: "hidden",
+                                          },
+                                          children:
+                                            /* @__PURE__ */ jsxRuntime.jsx(
+                                              "img",
+                                              {
+                                                src:
+                                                  images[activeImageIndex]
+                                                    .url || "/placeholder.svg",
+                                                alt:
+                                                  images[activeImageIndex]
+                                                    .alternativeText ||
+                                                  `Image ${activeImageIndex + 1}`,
+                                                style: {
+                                                  position: "absolute",
+                                                  top: 0,
+                                                  left: 0,
+                                                  width: "100%",
+                                                  height: "100%",
+                                                  objectFit: "contain",
+                                                },
+                                              },
+                                            ),
+                                        },
+                                      ),
+                                      /* @__PURE__ */ jsxRuntime.jsxs(
+                                        designSystem.Flex,
+                                        {
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                          marginTop: 2,
+                                          children: [
+                                            /* @__PURE__ */ jsxRuntime.jsx(
+                                              designSystem.Button,
+                                              {
+                                                variant: "tertiary",
+                                                size: "S",
+                                                onClick: () =>
+                                                  setActiveImageIndex((prev) =>
+                                                    prev > 0
+                                                      ? prev - 1
+                                                      : images.length - 1,
+                                                  ),
+                                                disabled:
+                                                  isProcessing ||
+                                                  images.length <= 1,
+                                                children: "Previous",
+                                              },
+                                            ),
+                                            /* @__PURE__ */ jsxRuntime.jsxs(
+                                              designSystem.Typography,
+                                              {
+                                                variant: "pi",
+                                                textColor: "neutral600",
+                                                children: [
+                                                  activeImageIndex + 1,
+                                                  " / ",
+                                                  images.length,
+                                                ],
+                                              },
+                                            ),
+                                            /* @__PURE__ */ jsxRuntime.jsx(
+                                              designSystem.Button,
+                                              {
+                                                variant: "tertiary",
+                                                size: "S",
+                                                onClick: () =>
+                                                  setActiveImageIndex((prev) =>
+                                                    prev < images.length - 1
+                                                      ? prev + 1
+                                                      : 0,
+                                                  ),
+                                                disabled:
+                                                  isProcessing ||
+                                                  images.length <= 1,
+                                                children: "Next",
+                                              },
+                                            ),
+                                          ],
+                                        },
+                                      ),
+                                    ],
+                                  },
+                                ),
+                          ],
+                        },
+                      ),
                     }),
-                    name: "prompt",
-                    value: prompt,
-                    disabled: disabled || isProcessing || images.length === 0,
-                    required,
-                    placeholder: placeholder || "Enter a prompt to modify the active image...",
-                    onChange: handlePromptChange
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginTop: 2, children: /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Button,
-                  {
-                    onClick: handleSubmit,
-                    disabled: !prompt.trim() || isProcessing || images.length === 0,
-                    loading: isProcessing,
-                    children: "Submit"
-                  }
-                ) })
-              ] }) })
-            ] }),
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {}),
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Error, {})
-          ] })
-        ] }) }),
-        modalState !== "closed" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, { open: true, onOpenChange: handleCloseModal, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Content, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, { children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Title, { children: [
-            modalState === "loading" && "Processing Image...",
-            modalState === "success" && "Image Modified",
-            modalState === "error" && "Error"
-          ] }) }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Body, { children: [
-            modalState === "loading" && /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, { justifyContent: "center", marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Typography, { variant: "omega", textColor: "neutral600", children: [
-                "Time elapsed: ",
-                formatElapsedTime(elapsedTime)
-              ] }) }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(
-                designSystem.Box,
-                {
-                  background: "neutral200",
-                  hasRadius: true,
-                  style: {
-                    width: "100%",
-                    height: "300px",
-                    animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                  }
-                }
-              ) }),
-              /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Box,
-                  {
-                    background: "neutral200",
-                    hasRadius: true,
-                    style: {
-                      width: "100%",
-                      height: "20px",
-                      marginBottom: "8px",
-                      animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                    }
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Box,
-                  {
-                    background: "neutral200",
-                    hasRadius: true,
-                    style: {
-                      width: "80%",
-                      height: "20px",
-                      animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                    }
-                  }
-                )
-              ] })
-            ] }),
-            modalState === "success" && /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(
-                "img",
-                {
-                  src: resultImage || "/placeholder.svg",
-                  alt: "Modified image",
-                  style: {
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "4px"
-                  }
-                }
-              ) }),
-              /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Typography,
-                  {
-                    variant: "sigma",
-                    fontWeight: "bold",
-                    marginBottom: 2,
-                    children: "AI Reasoning"
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", children: resultReasoning })
-              ] })
-            ] }),
-            modalState === "error" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", textColor: "danger600", children: errorMessage }) })
-          ] }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Footer, { children: [
-            modalState === "success" && /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { variant: "tertiary", onClick: handleCloseModal, children: "Dismiss" }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { onClick: handleSaveImage, children: "Save to Collection" })
-            ] }),
-            modalState === "error" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { onClick: handleCloseModal, children: "Close" })
-          ] })
-        ] }) }),
-        /* @__PURE__ */ jsxRuntime.jsx("style", { children: `
+                    /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, {
+                      col: 6,
+                      xs: 12,
+                      children: /* @__PURE__ */ jsxRuntime.jsxs(
+                        designSystem.Box,
+                        {
+                          children: [
+                            /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Field.Label,
+                              { children: "Prompt" },
+                            ),
+                            /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Textarea,
+                              {
+                                ref,
+                                "aria-label": formatMessage({
+                                  id: getTranslation(
+                                    "imagiterate.input.aria-label",
+                                  ),
+                                  defaultMessage: "Imagiterate input",
+                                }),
+                                name: "prompt",
+                                value: prompt,
+                                disabled:
+                                  disabled ||
+                                  isProcessing ||
+                                  images.length === 0,
+                                required,
+                                placeholder:
+                                  placeholder ||
+                                  "Enter a prompt to modify the active image...",
+                                onChange: handlePromptChange,
+                              },
+                            ),
+                            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                              marginTop: 2,
+                              children: /* @__PURE__ */ jsxRuntime.jsx(
+                                designSystem.Button,
+                                {
+                                  onClick: handleSubmit,
+                                  disabled:
+                                    !prompt.trim() ||
+                                    isProcessing ||
+                                    images.length === 0,
+                                  loading: isProcessing,
+                                  children: "Submit",
+                                },
+                              ),
+                            }),
+                          ],
+                        },
+                      ),
+                    }),
+                  ],
+                }),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {}),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Error, {}),
+              ],
+            }),
+          ],
+        }),
+      }),
+      modalState !== "closed" &&
+        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, {
+          open: true,
+          onOpenChange: handleCloseModal,
+          children: /* @__PURE__ */ jsxRuntime.jsxs(
+            designSystem.Modal.Content,
+            {
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, {
+                  children: /* @__PURE__ */ jsxRuntime.jsxs(
+                    designSystem.Modal.Title,
+                    {
+                      children: [
+                        modalState === "loading" && "Processing Image...",
+                        modalState === "success" && "Image Modified",
+                        modalState === "error" && "Error",
+                      ],
+                    },
+                  ),
+                }),
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Body, {
+                  children: [
+                    modalState === "loading" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, {
+                            justifyContent: "center",
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsxs(
+                              designSystem.Typography,
+                              {
+                                variant: "omega",
+                                textColor: "neutral600",
+                                children: [
+                                  "Time elapsed: ",
+                                  formatElapsedTime(elapsedTime),
+                                ],
+                              },
+                            ),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Box,
+                              {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "100%",
+                                  height: "300px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              },
+                            ),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                            children: [
+                              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "100%",
+                                  height: "20px",
+                                  marginBottom: "8px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              }),
+                              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "80%",
+                                  height: "20px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                    modalState === "success" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsx("img", {
+                              src: resultImage || "/placeholder.svg",
+                              alt: "Modified image",
+                              style: {
+                                width: "100%",
+                                height: "auto",
+                                borderRadius: "4px",
+                              },
+                            }),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                            children: [
+                              /* @__PURE__ */ jsxRuntime.jsx(
+                                designSystem.Typography,
+                                {
+                                  variant: "sigma",
+                                  fontWeight: "bold",
+                                  marginBottom: 2,
+                                  children: "AI Reasoning",
+                                },
+                              ),
+                              /* @__PURE__ */ jsxRuntime.jsx(
+                                designSystem.Typography,
+                                { variant: "omega", children: resultReasoning },
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                    modalState === "error" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                        children: /* @__PURE__ */ jsxRuntime.jsx(
+                          designSystem.Typography,
+                          {
+                            variant: "omega",
+                            textColor: "danger600",
+                            children: errorMessage,
+                          },
+                        ),
+                      }),
+                  ],
+                }),
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Footer, {
+                  children: [
+                    modalState === "success" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                            variant: "tertiary",
+                            onClick: handleCloseModal,
+                            children: "Dismiss",
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                            onClick: handleSaveImage,
+                            children: "Save to Collection",
+                          }),
+                        ],
+                      }),
+                    modalState === "error" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                        onClick: handleCloseModal,
+                        children: "Close",
+                      }),
+                  ],
+                }),
+              ],
+            },
+          ),
+        }),
+      /* @__PURE__ */ jsxRuntime.jsx("style", {
+        children: `
         @keyframes pulse {
           0%, 100% {
             opacity: 1;
@@ -428,10 +601,10 @@ const Input = React__namespace.forwardRef((props, ref) => {
             opacity: 0.5;
           }
         }
-      ` })
-      ]
-    }
-  );
+      `,
+      }),
+    ],
+  });
 });
 exports.Input = Input;
 //# sourceMappingURL=Input-BGWo7TAp.js.map
