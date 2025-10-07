@@ -26,7 +26,7 @@ const controller = ({ strapi }) => ({
   async saveImage(ctx) {
     ctx.body = await strapi
       .plugin("imagiterate")
-      .service("document")
+      .service("adminSaveImage")
       .saveImage(ctx);
   },
 });

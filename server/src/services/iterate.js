@@ -121,7 +121,13 @@ const iterate = ({ strapi }) => ({
       });
     if (update.error) return update;
 
-    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+    const replicateUrl = await output.url();
+
+    // Normalize to a plain string
+    const resultUrl =
+      typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+
+    return { ...imageDocument, url: resultUrl, alt: "Alt text", prompt };
   },
 });
 

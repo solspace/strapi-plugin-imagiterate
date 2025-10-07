@@ -4,6 +4,8 @@ import mime from "mime-types";
 
 //	Get base 64 image from url, locally or remote
 const getBase64Image = async (imageUrl) => {
+  console.log("incoming image", imageUrl);
+
   //  Handle both local and remote urls
   if (imageUrl.startsWith("http")) {
     // Remote fetch

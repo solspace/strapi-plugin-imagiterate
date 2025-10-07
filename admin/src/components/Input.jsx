@@ -49,6 +49,7 @@ export const Input = React.forwardRef((props, ref) => {
   const [modalState, setModalState] = React.useState("closed");
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [resultImage, setResultImage] = React.useState("");
+  const [resultImageUrl, setResultImageUrl] = React.useState("");
   const [resultReasoning, setResultReasoning] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
 
@@ -157,6 +158,7 @@ export const Input = React.forwardRef((props, ref) => {
       const data = await res.json();
       console.log("[v0] Iterate response:", data);
 
+      setResultImageUrl(data.url);
       setResultImage(data.base64Image);
       setResultReasoning(data.reasoning);
       setModalState("success");
@@ -178,7 +180,7 @@ export const Input = React.forwardRef((props, ref) => {
         },
         body: JSON.stringify({
           documentId: documentId,
-          imageUrl: resultImage,
+          url: resultImageUrl,
         }),
       });
 
@@ -190,12 +192,15 @@ export const Input = React.forwardRef((props, ref) => {
       console.log("[v0] Saved image:", savedImage);
 
       // Add new image to carousel and make it active
-      const newImages = [...images, savedImage];
+      const newImages = [
+        ...images,
+        { alternativeText: "", url: resultImageUrl, base64Image: resultImage },
+      ];
       setImages(newImages);
       setActiveImageIndex(newImages.length - 1);
 
       // Close modal and reset
-      setModalState("closed");
+      setModalState("successfulSave");
       setPrompt("");
       setResultImage("");
       setResultReasoning("");
@@ -235,7 +240,7 @@ export const Input = React.forwardRef((props, ref) => {
               <Language id="imagiterateAi" />
             </Typography>
           </CardHeader>
-          <CardSubtitle>
+          <CardSubtitle padding={4}>
             <Typography>
               <Language id="subtitle" />
             </Typography>
@@ -274,7 +279,7 @@ export const Input = React.forwardRef((props, ref) => {
                     </Box>
                   ) : (
                     <CarouselInput
-                      label={`Imagiterate images (${activeImageIndex + 1}/${images.length})`}
+                      label={`Active image (${activeImageIndex + 1}/${images.length})`}
                       selectedSlide={activeImageIndex}
                       previousLabel="Previous slide"
                       nextLabel="Next slide"
@@ -289,21 +294,40 @@ export const Input = React.forwardRef((props, ref) => {
                         )
                       }
                       // remove actions to drop the edit/link/delete/publish bar
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "90%",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
                     >
                       {images.map((img, index) => (
                         <CarouselSlide
-                          key={img.id || index}
+                          key={index}
                           label={`${index + 1} of ${images.length} slides`}
-                          style={{ height: "100%" }}
+                          style={{
+                            height: "100%",
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
                         >
                           <Box
-                            style={{ cursor: "pointer" }}
+                            style={{
+                              cursor: "pointer",
+                              position: "relative",
+                              zIndex: 0,
+                            }}
                             onClick={() => setEnlargedImage(img.url)}
                           >
                             <CarouselImage
-                              src={img.url || "/placeholder.svg"}
+                              src={
+                                img.base64Image || img.url || "/placeholder.svg"
+                              }
                               alt={img.alternativeText || `Image ${index + 1}`}
+                              style={{
+                                width: "99%",
+                                height: "auto",
+                                display: "block",
+                              }}
                             />
                           </Box>
                         </CarouselSlide>
@@ -364,6 +388,9 @@ export const Input = React.forwardRef((props, ref) => {
               <Modal.Title>
                 {modalState === "loading" && <Language id="processingImage" />}
                 {modalState === "success" && <Language id="aiModifiedImage" />}
+                {modalState === "successfulSave" && (
+                  <Language id="aiModifiedImage" />
+                )}
                 {modalState === "error" && <Language id="error" />}
               </Modal.Title>
             </Modal.Header>
@@ -373,7 +400,7 @@ export const Input = React.forwardRef((props, ref) => {
                   {/* Timer */}
                   <Flex justifyContent="center" marginBottom={4}>
                     <Typography variant="omega" textColor="neutral600">
-                      <Language id="timeElapsed" />:{" "}
+                      <Language id="generating" />:{" "}
                       {formatElapsedTime(elapsedTime)}
                     </Typography>
                   </Flex>
@@ -446,6 +473,17 @@ export const Input = React.forwardRef((props, ref) => {
                 </Box>
               )}
 
+              {modalState === "successfulSave" && (
+                <Box>
+                  {/* Result image */}
+                  <Box marginBottom={4}>
+                    <Typography variant="delta" marginBottom={2}>
+                      <Language id="imageSaved" />
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
               {modalState === "error" && (
                 <Box>
                   <Typography variant="omega" textColor="danger600">
@@ -462,6 +500,13 @@ export const Input = React.forwardRef((props, ref) => {
                   </Button>
                   <Button onClick={handleSaveImage}>
                     <Language id="save" />
+                  </Button>
+                </>
+              )}
+              {modalState === "successfulSave" && (
+                <>
+                  <Button variant="tertiary" onClick={handleCloseModal}>
+                    Dismiss
                   </Button>
                 </>
               )}

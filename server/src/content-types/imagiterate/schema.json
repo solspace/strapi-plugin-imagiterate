@@ -19,6 +19,9 @@
     "comment": ""
   },
   "attributes": {
+    "title": {
+      "type": "string"
+    },
     "originalImage": {
       "type": "media",
       "multiple": false,

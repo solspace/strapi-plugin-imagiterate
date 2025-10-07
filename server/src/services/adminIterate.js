@@ -61,6 +61,7 @@ const adminIterate = ({ strapi }) => ({
       });
     if (imageDocument.error) return imageDocument;
 
+    /*
     const fakeImages = [
       "http://localhost:1337/uploads/jordan_rohloff_0w_WS_It20m_T4_unsplash_9bde4f0ef1.jpg",
       "http://localhost:1337/uploads/lorri_thomasson_g_Q7_ABP_3xj_L0_unsplash_1bf74aaf92.jpg",
@@ -71,6 +72,7 @@ const adminIterate = ({ strapi }) => ({
     base64Image = await getBase64Image(randomImage);
 
     return { base64Image, url: randomImage, alt: "Alt text", prompt };
+*/
 
     //  Instantiate Replicate
     const { replicate, model } = getReplicate();
@@ -86,10 +88,18 @@ const adminIterate = ({ strapi }) => ({
     //  Error?
     if (output.error) return output;
 
-    //	Prepare base64 of the resulting image so that we can show the image in the Strapi admin without CORS errors
-    base64Image = await getBase64Image(output.url());
+    const replicateUrl = await output.url();
 
-    return { base64Image, url: output.url(), alt: "Alt text", prompt };
+    // Normalize to a plain string
+    const resultUrl =
+      typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+
+    console.log("image received from Replicate", resultUrl);
+
+    //	Prepare base64 of the resulting image so that we can show the image in the Strapi admin without CORS errors
+    base64Image = await getBase64Image(resultUrl);
+
+    return { base64Image, url: resultUrl, alt: "Alt text", prompt };
   },
 });
 

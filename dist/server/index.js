@@ -49,6 +49,9 @@ const options = {
   comment: "",
 };
 const attributes = {
+  title: {
+    type: "string",
+  },
   originalImage: {
     type: "media",
     multiple: false,
@@ -112,7 +115,7 @@ const controller = ({ strapi: strapi2 }) => ({
   async saveImage(ctx) {
     ctx.body = await strapi2
       .plugin("imagiterate")
-      .service("document")
+      .service("adminSaveImage")
       .saveImage(ctx);
   },
 });
@@ -8865,6 +8868,7 @@ var mimeDb = require$$0;
 })(mimeTypes);
 const mime = /* @__PURE__ */ getDefaultExportFromCjs(mimeTypes);
 const getBase64Image$1 = async (imageUrl) => {
+  console.log("incoming image", imageUrl);
   if (imageUrl.startsWith("http")) {
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
@@ -8937,17 +8941,138 @@ const adminIterate = ({ strapi: strapi2 }) => ({
         populate: ["images"],
       });
     if (imageDocument.error) return imageDocument;
-    const fakeImages = [
-      "http://localhost:1337/uploads/jordan_rohloff_0w_WS_It20m_T4_unsplash_9bde4f0ef1.jpg",
-      "http://localhost:1337/uploads/lorri_thomasson_g_Q7_ABP_3xj_L0_unsplash_1bf74aaf92.jpg",
-      "http://localhost:1337/uploads/replicate_ai_file_252bce9042.png",
-    ];
-    const randomImage =
-      fakeImages[Math.floor(Math.random() * fakeImages.length)];
-    base64Image = await getBase64Image$1(randomImage);
-    return { base64Image, url: randomImage, alt: "Alt text", prompt };
+    const { replicate, model } = getReplicate$2();
+    if (replicate.error) return replicate;
+    const input = {
+      input_image: base64Image || url,
+      prompt,
+    };
+    const output = await replicate.run(model, { input });
+    if (output.error) return output;
+    const replicateUrl = await output.url();
+    const resultUrl =
+      typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+    console.log("image received from Replicate", resultUrl);
+    base64Image = await getBase64Image$1(resultUrl);
+    return { base64Image, url: resultUrl, alt: "Alt text", prompt };
   },
 });
+const getReplicate$2 = () => {
+  const token =
+    strapi.plugin("imagiterate").config("replicateApiToken") || null;
+  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
+  if (!token) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateToken",
+        message:
+          "Please provide a valid API token for the Replicate AI service.",
+      },
+    };
+  }
+  if (!model) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateApiModel",
+        message: "Please provide a valid model for the Replicate AI service.",
+      },
+    };
+  }
+  const replicate = new Replicate__default.default({
+    auth: token,
+  });
+  return { replicate, model };
+};
+const adminSaveImage = ({ strapi: strapi2 }) => ({
+  async saveImage(ctx) {
+    const { documentId, url } = ctx.request.body;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id.",
+        },
+      };
+    }
+    if (!url) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingImageUrl",
+          message: "Please provide an image url.",
+        },
+      };
+    }
+    let imageDocument = await strapi2
+      .documents("plugin::imagiterate.imagiterate")
+      .findOne({
+        documentId,
+        populate: ["images"],
+      });
+    if (imageDocument.error) return imageDocument;
+    const newUploadedFile = await uploadImage$2(url);
+    if (newUploadedFile.error) return newUploadedFile;
+    const mergedImages = [
+      ...imageDocument.images.map((img) => img.id),
+      newUploadedFile[0].id,
+    ];
+    const update = await strapi2
+      .documents("plugin::imagiterate.imagiterate")
+      .update({
+        documentId,
+        data: {
+          images: mergedImages,
+        },
+      });
+    if (update.error) return update;
+    return imageDocument;
+  },
+});
+const getUploadService$2 = () => {
+  return strapi.plugin("upload").service("upload");
+};
+async function uploadImage$2(url) {
+  const uploadService = getUploadService$2();
+  try {
+    if (!url || typeof url !== "string") {
+      throw new Error("Invalid image URL");
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    const mimeType =
+      response.headers.get("content-type") ||
+      mime.lookup(url) ||
+      "application/octet-stream";
+    const ext = mime.extension(mimeType) || "jpg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const strapiPath = strapi.config.get("server.dirs.public");
+    const fileName = `/uploads/replicate-${Date.now()}.${ext}`;
+    const filePath = path__default.default.join(strapiPath, fileName);
+    await fs__default.default.writeFile(filePath, buffer);
+    const stats = await fs__default.default.stat(filePath);
+    const file = {
+      filepath: filePath,
+      originalFilename: `replicate-${Date.now()}.${ext}`,
+      mimetype: mimeType,
+      size: stats.size,
+    };
+    strapi.log.info(`Uploading image: ${file.originalFilename}`);
+    const uploadedFile = await uploadService.upload({
+      data: {},
+      files: file,
+    });
+    await fs__default.default.unlink(filePath);
+    return uploadedFile;
+  } catch (error) {
+    strapi.log.error("Failed to upload image from URL:", error);
+    return { error: { message: error.message } };
+  }
+}
 const document = ({ strapi: strapi2 }) => ({
   async getDocument(ctx) {
     const { documentId } = ctx.request.query;
@@ -9059,7 +9184,10 @@ const iterate = ({ strapi: strapi2 }) => ({
         },
       });
     if (update.error) return update;
-    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+    const replicateUrl = await output.url();
+    const resultUrl =
+      typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+    return { ...imageDocument, url: resultUrl, alt: "Alt text", prompt };
   },
 });
 const getUploadService$1 = () => {
@@ -9265,6 +9393,7 @@ async function getBase64Image(imageUrl) {
 }
 const services = {
   adminIterate,
+  adminSaveImage,
   document,
   iterate,
   upload,
