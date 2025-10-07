@@ -43,7 +43,7 @@ const adminSaveImage = ({ strapi }) => ({
 
     //  Merge new image into images array
     const mergedImages = [
-      ...imageDocument.images.map((img) => img.id),
+      ...(imageDocument.images || []).map((img) => img.id),
       newUploadedFile[0].id,
     ];
 

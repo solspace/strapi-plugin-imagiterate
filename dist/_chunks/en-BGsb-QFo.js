@@ -1,4 +1,6 @@
-{
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const en = {
   "imagiterate.description": "Select any color",
   "imagiterate.input.aria-label": "Color picker input",
   "imagiterate.imagiterateField.imagiterateAi": "Imagiterate AI",
@@ -23,4 +25,6 @@
   "plugin.description.long": "A Strapi-maintained color picker custom field. Use saturation and hue sliders to select a color and save the value as a HEX string.",
   "plugin.description.short": "A Strapi-maintained color picker custom field.",
   "plugin.name": "Imagiterate"
-}
+};
+exports.default = en;
+//# sourceMappingURL=en-BGsb-QFo.js.map
