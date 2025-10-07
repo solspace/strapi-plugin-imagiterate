@@ -13,7 +13,7 @@ const iterate = ({ strapi }) => ({
     if (!documentId) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingDocumentId",
           message: "Please provide a document id.",
         },
@@ -24,7 +24,7 @@ const iterate = ({ strapi }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message:
             "Please provide a prompt to guide the AI in processing your image.",
@@ -36,7 +36,7 @@ const iterate = ({ strapi }) => ({
     if (!url) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImageUrl",
           message: "Please provide an image url for the AI to process.",
         },
@@ -47,7 +47,7 @@ const iterate = ({ strapi }) => ({
     if (!token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingToken",
           message: "Please provide a valid token.",
         },
@@ -57,7 +57,7 @@ const iterate = ({ strapi }) => ({
     if (!uuidValidate(token)) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidTokenFormat",
           message: "Please provide a token in a valid format.",
         },
@@ -76,20 +76,12 @@ const iterate = ({ strapi }) => ({
     if (token != imageDocument.token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidToken",
           message: "Please provide a valid token.",
         },
       };
     }
-    /*
-    const fakeImages = [
-      'http://localhost:1337/uploads/steven_cordes_Exo0_AZ_Aye_M8_unsplash_c2cbe9f625.jpg',
-      'http://localhost:1337/uploads/celine_chamiot_poncet_DH_9_U5x8d_Ym_U_unsplash_205cff5701.jpg',
-      'http://localhost:1337/uploads/nick_van_den_berg_6x387_K_M_Wt_I_unsplash_87ae6e75ab.jpg',
-    ];
-    const randomImage = fakeImages[Math.floor(Math.random() * fakeImages.length)];
-*/
 
     //  Instantiate Replicate
     const { replicate, model } = getReplicate();
@@ -114,7 +106,7 @@ const iterate = ({ strapi }) => ({
 
     //  Merge new image into images array
     const mergedImages = [
-      ...imageDocument.images.map((img) => img.id),
+      ...(imageDocument.images || []).map((img) => img.id),
       newUploadedFile[0].id,
     ];
 
@@ -129,7 +121,13 @@ const iterate = ({ strapi }) => ({
       });
     if (update.error) return update;
 
-    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+    const replicateUrl = await output.url();
+
+    // Normalize to a plain string
+    const resultUrl =
+      typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+
+    return { ...imageDocument, url: resultUrl, alt: "Alt text", prompt };
   },
 });
 
@@ -147,7 +145,7 @@ const getReplicate = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message:
           "Please provide a valid API token for the Replicate AI service.",
@@ -158,7 +156,7 @@ const getReplicate = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service.",
       },

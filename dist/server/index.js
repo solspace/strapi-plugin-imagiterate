@@ -1,8 +1,8 @@
 "use strict";
 const fs = require("fs/promises");
 const path = require("path");
-const uuid = require("uuid");
 const Replicate = require("replicate");
+const uuid = require("uuid");
 const _interopDefault = (e) => e && e.__esModule ? e : { default: e };
 const fs__default = /* @__PURE__ */ _interopDefault(fs);
 const path__default = /* @__PURE__ */ _interopDefault(path);
@@ -11,7 +11,13 @@ const bootstrap = ({ strapi: strapi2 }) => {
 };
 const destroy = ({ strapi: strapi2 }) => {
 };
+const PLUGIN_ID = "imagiterate";
 const register = ({ strapi: strapi2 }) => {
+  strapi2.customFields.register({
+    name: "imagiterateField",
+    plugin: PLUGIN_ID,
+    type: "string"
+  });
 };
 const config = {
   default: ({ env }) => ({
@@ -44,6 +50,9 @@ const options = {
   comment: ""
 };
 const attributes = {
+  title: {
+    type: "string"
+  },
   originalImage: {
     type: "media",
     multiple: false,
@@ -60,6 +69,10 @@ const attributes = {
   },
   token: {
     type: "string"
+  },
+  AI: {
+    type: "customField",
+    customField: "plugin::imagiterate.imagiterateField"
   }
 };
 const require$$0$1 = {
@@ -85,6 +98,15 @@ const controller = ({ strapi: strapi2 }) => ({
   },
   async upload(ctx) {
     ctx.body = await strapi2.plugin("imagiterate").service("upload").uploadImage(ctx);
+  },
+  async adminIterate(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("adminIterate").refineImage(ctx);
+  },
+  async getDocument(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("document").getDocument(ctx);
+  },
+  async saveImage(ctx) {
+    ctx.body = await strapi2.plugin("imagiterate").service("adminSaveImage").saveImage(ctx);
   }
 });
 const controllers = {
@@ -92,6 +114,35 @@ const controllers = {
 };
 const middlewares = {};
 const policies = {};
+const adminAPIRoutes = [
+  {
+    method: "GET",
+    path: "/get-document",
+    handler: "controller.getDocument",
+    config: {
+      auth: false,
+      policies: []
+    }
+  },
+  {
+    method: "POST",
+    path: "/admin-iterate",
+    handler: "controller.adminIterate",
+    config: {
+      auth: false,
+      policies: []
+    }
+  },
+  {
+    method: "POST",
+    path: "/save-image",
+    handler: "controller.saveImage",
+    config: {
+      auth: false,
+      policies: []
+    }
+  }
+];
 const contentAPIRoutes = [
   {
     method: "POST",
@@ -111,6 +162,10 @@ const contentAPIRoutes = [
   }
 ];
 const routes = {
+  "admin-action": {
+    type: "admin",
+    routes: adminAPIRoutes
+  },
   "content-api": {
     type: "content-api",
     routes: contentAPIRoutes
@@ -10918,13 +10973,39 @@ var mimeDb = require$$0;
   }
 })(mimeTypes);
 const mime = /* @__PURE__ */ getDefaultExportFromCjs(mimeTypes);
-const iterate = ({ strapi: strapi2 }) => ({
+const getBase64Image$1 = async (imageUrl) => {
+  console.log("incoming image", imageUrl);
+  if (imageUrl.startsWith("http")) {
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      return {
+        error: {
+          status: 400,
+          name: "FailedImageFetchImage",
+          message: "Unable to fetch image from remote server. " + imageResponse.statusText
+        }
+      };
+    }
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    const contentType = imageResponse.headers.get("content-type") || "image/png";
+    const base64Image = `data:${contentType};base64,${buffer.toString("base64")}`;
+    return base64Image;
+  } else {
+    const strapiPath = strapi.config.get("server.dirs.public");
+    const filePath = path__default.default.join(strapiPath, imageUrl);
+    const buffer = await fs__default.default.readFile(filePath);
+    const contentType = mime.lookup(filePath) || "image/png";
+    const base64Image = `data:${contentType};base64,${buffer.toString("base64")}`;
+    return base64Image;
+  }
+};
+const adminIterate = ({ strapi: strapi2 }) => ({
   async refineImage(ctx) {
     const { documentId, prompt, url, token } = ctx.request.body;
     if (!documentId) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingDocumentId",
           message: "Please provide a document id."
         }
@@ -10933,7 +11014,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message: "Please provide a prompt to guide the AI in processing your image."
         }
@@ -10942,7 +11023,191 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!url) {
       return {
         error: {
-          status: 500,
+          status: 400,
+          name: "MissingImageUrl",
+          message: "Please provide an image url for the AI to process."
+        }
+      };
+    }
+    let base64Image;
+    if (!url.startsWith("http")) {
+      base64Image = await getBase64Image$1(url);
+      if (base64Image.error) {
+        return base64Image;
+      }
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    const { replicate, model } = getReplicate$2();
+    if (replicate.error) return replicate;
+    const input = {
+      input_image: base64Image || url,
+      prompt
+    };
+    const output = await replicate.run(model, { input });
+    if (output.error) return output;
+    const replicateUrl = await output.url();
+    const resultUrl = typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+    console.log("image received from Replicate", resultUrl);
+    base64Image = await getBase64Image$1(resultUrl);
+    return { base64Image, url: resultUrl, alt: "Alt text", prompt };
+  }
+});
+const getReplicate$2 = () => {
+  const token = strapi.plugin("imagiterate").config("replicateApiToken") || null;
+  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
+  if (!token) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateToken",
+        message: "Please provide a valid API token for the Replicate AI service."
+      }
+    };
+  }
+  if (!model) {
+    return {
+      error: {
+        status: 400,
+        name: "MissingReplicateApiModel",
+        message: "Please provide a valid model for the Replicate AI service."
+      }
+    };
+  }
+  const replicate = new Replicate__default.default({
+    auth: token
+  });
+  return { replicate, model };
+};
+const adminSaveImage = ({ strapi: strapi2 }) => ({
+  async saveImage(ctx) {
+    const { documentId, url } = ctx.request.body;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    if (!url) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingImageUrl",
+          message: "Please provide an image url."
+        }
+      };
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    const newUploadedFile = await uploadImage$2(url);
+    if (newUploadedFile.error) return newUploadedFile;
+    const mergedImages = [
+      ...(imageDocument.images || []).map((img) => img.id),
+      newUploadedFile[0].id
+    ];
+    const update = await strapi2.documents("plugin::imagiterate.imagiterate").update({
+      documentId,
+      data: {
+        images: mergedImages
+      }
+    });
+    if (update.error) return update;
+    return imageDocument;
+  }
+});
+const getUploadService$2 = () => {
+  return strapi.plugin("upload").service("upload");
+};
+async function uploadImage$2(url) {
+  const uploadService = getUploadService$2();
+  try {
+    if (!url || typeof url !== "string") {
+      throw new Error("Invalid image URL");
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    const mimeType = response.headers.get("content-type") || mime.lookup(url) || "application/octet-stream";
+    const ext = mime.extension(mimeType) || "jpg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const strapiPath = strapi.config.get("server.dirs.public");
+    const fileName = `/uploads/replicate-${Date.now()}.${ext}`;
+    const filePath = path__default.default.join(strapiPath, fileName);
+    await fs__default.default.writeFile(filePath, buffer);
+    const stats = await fs__default.default.stat(filePath);
+    const file = {
+      filepath: filePath,
+      originalFilename: `replicate-${Date.now()}.${ext}`,
+      mimetype: mimeType,
+      size: stats.size
+    };
+    strapi.log.info(`Uploading image: ${file.originalFilename}`);
+    const uploadedFile = await uploadService.upload({
+      data: {},
+      files: file
+    });
+    await fs__default.default.unlink(filePath);
+    return uploadedFile;
+  } catch (error) {
+    strapi.log.error("Failed to upload image from URL:", error);
+    return { error: { message: error.message } };
+  }
+}
+const document = ({ strapi: strapi2 }) => ({
+  async getDocument(ctx) {
+    const { documentId } = ctx.request.query;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    let imageDocument = await strapi2.documents("plugin::imagiterate.imagiterate").findOne({
+      documentId,
+      populate: ["originalImage", "images"]
+    });
+    if (imageDocument.error) return imageDocument;
+    return { ...imageDocument };
+  }
+});
+const iterate = ({ strapi: strapi2 }) => ({
+  async refineImage(ctx) {
+    const { documentId, prompt, url, token } = ctx.request.body;
+    if (!documentId) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingDocumentId",
+          message: "Please provide a document id."
+        }
+      };
+    }
+    if (!prompt) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingPrompt",
+          message: "Please provide a prompt to guide the AI in processing your image."
+        }
+      };
+    }
+    if (!url) {
+      return {
+        error: {
+          status: 400,
           name: "MissingImageUrl",
           message: "Please provide an image url for the AI to process."
         }
@@ -10951,7 +11216,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingToken",
           message: "Please provide a valid token."
         }
@@ -10960,7 +11225,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (!uuid.validate(token)) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidTokenFormat",
           message: "Please provide a token in a valid format."
         }
@@ -10974,7 +11239,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     if (token != imageDocument.token) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "InvalidToken",
           message: "Please provide a valid token."
         }
@@ -10992,7 +11257,7 @@ const iterate = ({ strapi: strapi2 }) => ({
     const newUploadedFile = await uploadBlob$1(blob);
     if (newUploadedFile.error) return newUploadedFile;
     const mergedImages = [
-      ...imageDocument.images.map((img) => img.id),
+      ...(imageDocument.images || []).map((img) => img.id),
       newUploadedFile[0].id
     ];
     const update = await strapi2.documents("plugin::imagiterate.imagiterate").update({
@@ -11002,7 +11267,9 @@ const iterate = ({ strapi: strapi2 }) => ({
       }
     });
     if (update.error) return update;
-    return { ...imageDocument, url: output.url(), alt: "Alt text", prompt };
+    const replicateUrl = await output.url();
+    const resultUrl = typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
+    return { ...imageDocument, url: resultUrl, alt: "Alt text", prompt };
   }
 });
 const getUploadService$1 = () => {
@@ -11014,7 +11281,7 @@ const getReplicate$1 = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message: "Please provide a valid API token for the Replicate AI service."
       }
@@ -11023,7 +11290,7 @@ const getReplicate$1 = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service."
       }
@@ -11067,7 +11334,7 @@ const upload = ({ strapi: strapi2 }) => ({
     if (!prompt) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingPrompt",
           message: "Please provide a prompt to guide the AI in processing your image."
         }
@@ -11077,7 +11344,7 @@ const upload = ({ strapi: strapi2 }) => ({
     if (!files.image) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "MissingImage",
           message: "Please upload an image."
         }
@@ -11125,7 +11392,7 @@ const getReplicate = () => {
   if (!token) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateToken",
         message: "Please provide a valid API token for the Replicate AI service."
       }
@@ -11134,7 +11401,7 @@ const getReplicate = () => {
   if (!model) {
     return {
       error: {
-        status: 500,
+        status: 400,
         name: "MissingReplicateApiModel",
         message: "Please provide a valid model for the Replicate AI service."
       }
@@ -11178,7 +11445,7 @@ async function getBase64Image(imageUrl) {
     if (!imageResponse.ok) {
       return {
         error: {
-          status: 500,
+          status: 400,
           name: "FailedImageFetchImage",
           message: "Please to fetch image from remote server. " + imageResponse.statusText
         }
@@ -11196,6 +11463,9 @@ async function getBase64Image(imageUrl) {
   }
 }
 const services = {
+  adminIterate,
+  adminSaveImage,
+  document,
   iterate,
   upload
 };
@@ -11212,3 +11482,4 @@ const index = {
   services
 };
 module.exports = index;
+//# sourceMappingURL=index.js.map
