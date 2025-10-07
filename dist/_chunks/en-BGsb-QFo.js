@@ -27,4 +27,3 @@ const en = {
   "plugin.name": "Imagiterate"
 };
 exports.default = en;
-//# sourceMappingURL=en-BGsb-QFo.js.map
