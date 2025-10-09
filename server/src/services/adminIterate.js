@@ -8,17 +8,6 @@ const adminIterate = ({ strapi }) => ({
   async refineImage(ctx) {
     const { documentId, prompt, url, token } = ctx.request.body;
 
-    //  Do we have a document id?
-    if (!documentId) {
-      return {
-        error: {
-          status: 400,
-          name: "MissingDocumentId",
-          message: "Please provide a document id.",
-        },
-      };
-    }
-
     //  Do we have a prompt?
     if (!prompt) {
       return {
@@ -51,15 +40,6 @@ const adminIterate = ({ strapi }) => ({
         return base64Image;
       }
     }
-
-    // Query
-    let imageDocument = await strapi
-      .documents("plugin::imagiterate.imagiterate")
-      .findOne({
-        documentId,
-        populate: ["images"],
-      });
-    if (imageDocument.error) return imageDocument;
 
     /*
     const fakeImages = [

@@ -1,5 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
+import { errors } from "@strapi/utils";
+
+const { ValidationError, ApplicationError, NotFoundError } = errors;
 
 const document = ({ strapi }) => ({
   async getDocument(ctx) {
@@ -26,6 +29,18 @@ const document = ({ strapi }) => ({
     if (imageDocument.error) return imageDocument;
 
     return { ...imageDocument };
+  },
+  async getImages(ctx) {
+    const { documentId } = ctx.request.query;
+
+    // Query
+    const images = await strapi.documents("plugin::upload.file").findMany({
+      filters: { mime: { $contains: "image" } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (images.error) return images;
+
+    return images;
   },
 });
 

@@ -34,14 +34,14 @@ export const Input = React.forwardRef((props, ref) => {
     disabled,
     placeholder,
     onChange,
+    images: externalImages = [],
   } = props;
 
   const field = useField(name);
   const { formatMessage } = useIntl();
-
   const { id: documentId } = useParams();
-
-  const [images, setImages] = React.useState([]);
+  const [images, setImages] = React.useState(externalImages);
+  const [embeddedFromWidget, setEmbeddedFromWidget] = React.useState(false);
   const [activeImageIndex, setActiveImageIndex] = React.useState(0);
   const [enlargedImage, setEnlargedImage] = React.useState(null);
   const [prompt, setPrompt] = React.useState("");
@@ -56,6 +56,10 @@ export const Input = React.forwardRef((props, ref) => {
   const timerRef = React.useRef(null);
 
   React.useEffect(() => {
+    // Set embedded from widget
+    setEmbeddedFromWidget(externalImages && externalImages.length > 0);
+
+    //	Initial fetch
     const fetchDocument = async () => {
       try {
         const res = await fetch(
@@ -206,7 +210,7 @@ export const Input = React.forwardRef((props, ref) => {
       setResultReasoning("");
     } catch (err) {
       console.error("[v0] Error saving image:", err);
-      setErrorMessage("Failed to save image to collection");
+      setErrorMessage("Failed to save image.");
       setModalState("error");
     }
   };
@@ -235,20 +239,24 @@ export const Input = React.forwardRef((props, ref) => {
     >
       <Flex direction="column" alignItems="stretch" gap={1}>
         <Card>
-          <CardHeader>
-            <Typography fontWeight="bold">
-              <Language id="imagiterateAi" />
-            </Typography>
-          </CardHeader>
-          <CardSubtitle padding={4}>
-            <Typography>
-              <Language id="subtitle" />
-            </Typography>
-          </CardSubtitle>
+          {!embeddedFromWidget && (
+            <>
+              <CardHeader>
+                <Typography fontWeight="bold">
+                  <Language id="imagiterateAi" />
+                </Typography>
+              </CardHeader>
+              <CardSubtitle padding={4}>
+                <Typography>
+                  <Language id="subtitle" />
+                </Typography>
+              </CardSubtitle>
+            </>
+          )}
 
           <CardBody>
             <Grid.Root
-              gap={4}
+              gap={embeddedFromWidget ? 0 : 4}
               style={{ alignItems: "stretch", minHeight: "300px" }}
             >
               {/* Left column: Carousel */}
@@ -357,7 +365,7 @@ export const Input = React.forwardRef((props, ref) => {
                     required={required}
                     placeholder={placeholder || <Language id="enterAPrompt" />}
                     onChange={handlePromptChange}
-                    rows={10}
+                    rows={embeddedFromWidget ? 7 : 10}
                     style={{ width: "100%" }}
                   />
                   <Box marginTop={2}>

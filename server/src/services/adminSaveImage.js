@@ -6,17 +6,6 @@ const adminSaveImage = ({ strapi }) => ({
   async saveImage(ctx) {
     const { documentId, url } = ctx.request.body;
 
-    //  Do we have a document id?
-    if (!documentId) {
-      return {
-        error: {
-          status: 400,
-          name: "MissingDocumentId",
-          message: "Please provide a document id.",
-        },
-      };
-    }
-
     //  Do we have a base64 image?
     if (!url) {
       return {
@@ -28,38 +17,45 @@ const adminSaveImage = ({ strapi }) => ({
       };
     }
 
-    // Make sure we can get our main collection document
-    let imageDocument = await strapi
-      .documents("plugin::imagiterate.imagiterate")
-      .findOne({
-        documentId,
-        populate: ["images"],
-      });
-    if (imageDocument.error) return imageDocument;
-
     //  Upload to Strapi
     const newUploadedFile = await uploadImage(url);
     if (newUploadedFile.error) return newUploadedFile;
 
-    //  Merge new image into images array
-    const mergedImages = [
-      ...(imageDocument.images || []).map((img) => img.id),
-      newUploadedFile[0].id,
-    ];
+    //  Do we have a document id? We save our images to that document
+    if (documentId) {
+      // Make sure we can get our main collection document
+      let imageDocument = await strapi
+        .documents("plugin::imagiterate.imagiterate")
+        .findOne({
+          documentId,
+          populate: ["images"],
+        });
+      if (imageDocument.error) return imageDocument;
 
-    // Query
-    const update = await strapi
-      .documents("plugin::imagiterate.imagiterate")
-      .update({
-        documentId,
-        data: {
-          images: mergedImages,
-        },
-      });
-    if (update.error) return update;
+      //  Merge new image into images array
+      const mergedImages = [
+        ...(imageDocument.images || []).map((img) => img.id),
+        newUploadedFile[0].id,
+      ];
 
-    //	Return
-    return imageDocument;
+      // Query
+      const update = await strapi
+        .documents("plugin::imagiterate.imagiterate")
+        .update({
+          documentId,
+          data: {
+            images: mergedImages,
+          },
+        });
+      if (update.error) return update;
+
+      //	Return
+      return imageDocument;
+    }
+
+    if (!documentId) {
+      return newUploadedFile;
+    }
   },
 });
 
@@ -117,6 +113,9 @@ async function uploadImage(url) {
       data: {},
       files: file,
     });
+    if (uploadedFile.error) return uploadedFile;
+    
+    strapi.log.info(`Uploaded this image: ${file.originalFilename}`);
 
     // Clean up temporary file
     await fs.unlink(filePath);
