@@ -210,7 +210,7 @@ export const Input = React.forwardRef((props, ref) => {
       setResultReasoning("");
     } catch (err) {
       console.error("[v0] Error saving image:", err);
-      setErrorMessage("Failed to save image to collection");
+      setErrorMessage("Failed to save image.");
       setModalState("error");
     }
   };
