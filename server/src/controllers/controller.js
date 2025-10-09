@@ -23,6 +23,12 @@ const controller = ({ strapi }) => ({
       .service("document")
       .getDocument(ctx);
   },
+  async getImages(ctx) {
+    ctx.body = await strapi
+      .plugin("imagiterate")
+      .service("document")
+      .getImages(ctx);
+  },
   async saveImage(ctx) {
     ctx.body = await strapi
       .plugin("imagiterate")

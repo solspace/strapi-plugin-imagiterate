@@ -9,6 +9,15 @@ export default [
     },
   },
   {
+    method: "GET",
+    path: "/get-images",
+    handler: "controller.getImages",
+    config: {
+      auth: false,
+      policies: [],
+    },
+  },
+  {
     method: "POST",
     path: "/admin-iterate",
     handler: "controller.adminIterate",

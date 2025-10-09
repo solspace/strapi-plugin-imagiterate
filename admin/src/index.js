@@ -13,6 +13,21 @@ export default {
       name: PLUGIN_ID,
     });
 
+    // Register a widget for the Homepage
+    app.widgets.register({
+      icon: AiIcon,
+      title: {
+        id: `${PLUGIN_ID}.widget.title`,
+        defaultMessage: "Imagiterate",
+      },
+      component: async () => {
+        const component = await import("./components/ImagiterateWidget");
+        return component.default;
+      },
+      id: "imagiterate-widget",
+      pluginId: PLUGIN_ID,
+    });
+
     app.customFields.register({
       name: "imagiterateField",
       pluginId: PLUGIN_ID,
