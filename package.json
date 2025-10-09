@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "@solspace/strapi-plugin-imagiterate",
   "description": "Prompt an AI to iterate on uploaded images and save them to Strapi's backend.",
   "license": "MIT",
