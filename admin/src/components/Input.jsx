@@ -351,6 +351,19 @@ export const Input = forwardRef((props, ref) => {
                       ))}
                     </CarouselInput>
                   )}
+                  {embeddedFromWidget && (
+                  <Box marginTop={2}>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={
+                        !prompt.trim() || isProcessing || images.length === 0
+                      }
+                      loading={isProcessing}
+                    >
+                      <Language id="addNewAsset" />
+                    </Button>
+                  </Box>
+                  )}
                 </Box>
               </Grid.Item>
 
@@ -372,10 +385,13 @@ export const Input = forwardRef((props, ref) => {
                     value={prompt}
                     disabled={disabled || isProcessing || images.length === 0}
                     required={required}
-                    placeholder={placeholder || <Language id="enterAPrompt" />}
+                    placeholder={formatMessage({
+                      id: getTranslation("imagiterate.imagiterateField.enterAPrompt"),
+                      defaultMessage: "Imagiterate input",
+                    })}
                     onChange={handlePromptChange}
-                    rows={embeddedFromWidget ? 7 : 10}
-                    style={{ width: "100%" }}
+                    rows={embeddedFromWidget ? 6 : 10}
+                    style={{ width: "100%", height: "148px" }}
                   />
                   <Box marginTop={2}>
                     <Button

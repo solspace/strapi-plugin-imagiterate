@@ -1,4 +1,4 @@
-{
+const en = {
   "imagiterate.imagiterateField.imagiterateAi": "Imagiterate AI",
   "imagiterate.imagiterateField.subtitle": "Provide a prompt to edit the active image. Imagiterate AI will modify your image and return it for your review. You can iterate as often as you like until your image looks the way you want.",
   "imagiterate.imagiterateField.activeImage": "Active Image",
@@ -18,5 +18,9 @@
   "imagiterate.imagiterateField.save": "Save",
   "imagiterate.imagiterateField.submit": "Submit",
   "imagiterate.imagiterateWidget.enterAPrompt": "Enter a prompt to modify the active image...",
-  "imagiterate.imagiterateField.addNewAsset": "Add new asset"
-}
+  "imagiterate.imagiterateField.uploadAnImage": "Upload an image"
+};
+export {
+  en as default
+};
+//# sourceMappingURL=en-DaKqPvlm.mjs.map
