@@ -33,7 +33,12 @@
       "allowedTypes": ["images"]
     },
     "token": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "admin": {
+          "editable": false
+        }
+      }
     },
     "AI": {
       "type": "customField",

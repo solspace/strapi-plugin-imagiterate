@@ -11,9 +11,13 @@ const __variableDynamicImportRuntimeHelper = (glob, path, segs) => {
       reject.bind(
         null,
         new Error(
-          "Unknown variable dynamic import: " + path + (path.split("/").length !== segs ? ". Note that variables only represent file names one level deep." : "")
-        )
-      )
+          "Unknown variable dynamic import: " +
+            path +
+            (path.split("/").length !== segs
+              ? ". Note that variables only represent file names one level deep."
+              : ""),
+        ),
+      ),
     );
   });
 };
@@ -31,27 +35,28 @@ const Initializer = ({ setPlugin }) => {
   }, []);
   return null;
 };
-const AiIcon = () => /* @__PURE__ */ jsx(Sparkles, { size: 10, color: "#666666", strokeWidth: 1 });
+const AiIcon = () =>
+  /* @__PURE__ */ jsx(Sparkles, { size: 10, color: "#666666", strokeWidth: 1 });
 const index = {
   register(app) {
     app.registerPlugin({
       id: PLUGIN_ID,
       initializer: Initializer,
       isReady: false,
-      name: PLUGIN_ID
+      name: PLUGIN_ID,
     });
     app.widgets.register({
       icon: AiIcon,
       title: {
         id: `${PLUGIN_ID}.widget.title`,
-        defaultMessage: "Imagiterate"
+        defaultMessage: "Imagiterate",
       },
       component: async () => {
         const component = await import("./ImagiterateWidget-Ca9CIEyr.mjs");
         return component.default;
       },
       id: "imagiterate-widget",
-      pluginId: PLUGIN_ID
+      pluginId: PLUGIN_ID,
     });
     app.customFields.register({
       name: "imagiterateField",
@@ -60,41 +65,47 @@ const index = {
       icon: AiIcon,
       intlLabel: {
         id: "imagiterate.imagiterateField.label",
-        defaultMessage: "Imagiterate Field"
+        defaultMessage: "Imagiterate Field",
       },
       intlDescription: {
         id: "imagiterate.imagiterateField.description",
-        defaultMessage: "A plain AI field"
+        defaultMessage: "A plain AI field",
       },
       icon: AiIcon,
       components: {
-        Input: async () => import("./Input-C1wNnU3o.mjs").then((module) => ({
-          default: module.Input
-        }))
-      }
+        Input: async () =>
+          import("./Input-C1wNnU3o.mjs").then((module) => ({
+            default: module.Input,
+          })),
+      },
     });
   },
   async registerTrads({ locales }) {
     const importedTrads = await Promise.all(
       locales.map((locale) => {
-        return __variableDynamicImportRuntimeHelper(/* @__PURE__ */ Object.assign({ "./translations/en.json": () => import("./en-DmXqiEeC.mjs") }), `./translations/${locale}.json`, 3).then(({ default: data }) => {
-          return {
-            data: prefixPluginTranslations(data, PLUGIN_ID),
-            locale
-          };
-        }).catch((error) => {
-          return {
-            data: {},
-            locale
-          };
-        });
-      })
+        return __variableDynamicImportRuntimeHelper(
+          /* @__PURE__ */ Object.assign({
+            "./translations/en.json": () => import("./en-DmXqiEeC.mjs"),
+          }),
+          `./translations/${locale}.json`,
+          3,
+        )
+          .then(({ default: data }) => {
+            return {
+              data: prefixPluginTranslations(data, PLUGIN_ID),
+              locale,
+            };
+          })
+          .catch((error) => {
+            return {
+              data: {},
+              locale,
+            };
+          });
+      }),
     );
     return Promise.resolve(importedTrads);
-  }
+  },
 };
-export {
-  PLUGIN_ID as P,
-  index as i
-};
+export { PLUGIN_ID as P, index as i };
 //# sourceMappingURL=index-NDX3CxZF.mjs.map

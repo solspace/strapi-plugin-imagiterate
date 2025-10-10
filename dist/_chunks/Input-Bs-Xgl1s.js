@@ -19,7 +19,7 @@ const Input = React.forwardRef((props, ref) => {
     disabled,
     placeholder,
     onChange,
-    images: externalImages = []
+    images: externalImages = [],
   } = props;
   const field = admin.useField(name);
   const { formatMessage } = reactIntl.useIntl();
@@ -46,9 +46,9 @@ const Input = React.forwardRef((props, ref) => {
           `/imagiterate/get-document?documentId=${documentId}`,
           {
             headers: {
-              "Content-Type": "application/json"
-            }
-          }
+              "Content-Type": "application/json",
+            },
+          },
         );
         const data = await res.json();
         console.log("[v0] Document data:", data);
@@ -104,13 +104,13 @@ const Input = React.forwardRef((props, ref) => {
       const res = await fetch("/imagiterate/admin-iterate", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           prompt,
           documentId,
-          url: activeImage.url
-        })
+          url: activeImage.url,
+        }),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -136,13 +136,13 @@ const Input = React.forwardRef((props, ref) => {
       const res = await fetch("/imagiterate/save-image", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId,
           alternativeText,
-          url: resultImageUrl
-        })
+          url: resultImageUrl,
+        }),
       });
       if (!res.ok) {
         throw new Error("Failed to save image");
@@ -151,7 +151,7 @@ const Input = React.forwardRef((props, ref) => {
       console.log("[v0] Saved image:", savedImage);
       const newImages = [
         ...images,
-        { alternativeText, url: resultImageUrl, base64Image: resultImage }
+        { alternativeText, url: resultImageUrl, base64Image: resultImage },
       ];
       setImages(newImages);
       setActiveImageIndex(newImages.length - 1);
@@ -179,277 +179,545 @@ const Input = React.forwardRef((props, ref) => {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
-  return /* @__PURE__ */ jsxRuntime.jsxs(
-    designSystem.Field.Root,
-    {
-      name,
-      id: name,
-      error: field.error,
-      hint,
-      required,
-      children: [
-        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, { direction: "column", alignItems: "stretch", gap: 1, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { children: [
-          !embeddedFromWidget && /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { fontWeight: "bold", children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "imagiterateAi" }) }) }),
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardSubtitle, { padding: 4, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "subtitle" }) }) })
-          ] }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.CardBody, { children: [
-            /* @__PURE__ */ jsxRuntime.jsxs(
-              designSystem.Grid.Root,
-              {
-                gap: embeddedFromWidget ? 0 : 4,
-                style: { alignItems: "stretch", minHeight: "300px" },
+  return /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Field.Root, {
+    name,
+    id: name,
+    error: field.error,
+    hint,
+    required,
+    children: [
+      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, {
+        direction: "column",
+        alignItems: "stretch",
+        gap: 1,
+        children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, {
+          children: [
+            !embeddedFromWidget &&
+              /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, {
                 children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 7, xs: 12, children: /* @__PURE__ */ jsxRuntime.jsx(
-                    designSystem.Box,
-                    {
-                      style: {
-                        width: "100%",
-                        height: "100%",
-                        maxHeight: "500px"
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, {
+                    children: /* @__PURE__ */ jsxRuntime.jsx(
+                      designSystem.Typography,
+                      {
+                        fontWeight: "bold",
+                        children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                          id: "imagiterateAi",
+                        }),
                       },
-                      children: images.length === 0 ? /* @__PURE__ */ jsxRuntime.jsx(
+                    ),
+                  }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardSubtitle, {
+                    padding: 4,
+                    children: /* @__PURE__ */ jsxRuntime.jsx(
+                      designSystem.Typography,
+                      {
+                        children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                          id: "subtitle",
+                        }),
+                      },
+                    ),
+                  }),
+                ],
+              }),
+            /* @__PURE__ */ jsxRuntime.jsxs(designSystem.CardBody, {
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Root, {
+                  gap: embeddedFromWidget ? 0 : 4,
+                  style: { alignItems: "stretch", minHeight: "300px" },
+                  children: [
+                    /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, {
+                      col: 7,
+                      xs: 12,
+                      children: /* @__PURE__ */ jsxRuntime.jsx(
                         designSystem.Box,
                         {
-                          background: "neutral100",
-                          padding: 8,
-                          hasRadius: true,
                           style: {
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minHeight: "300px"
+                            width: "100%",
+                            height: "100%",
+                            maxHeight: "500px",
                           },
-                          children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", textColor: "neutral600", children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "noImagesAvailable" }) })
-                        }
-                      ) : /* @__PURE__ */ jsxRuntime.jsx(
-                        designSystem.CarouselInput,
-                        {
-                          label: `Active image (${activeImageIndex + 1}/${images.length})`,
-                          selectedSlide: activeImageIndex,
-                          previousLabel: "Previous slide",
-                          nextLabel: "Next slide",
-                          onNext: () => setActiveImageIndex(
-                            (prev) => prev < images.length - 1 ? prev + 1 : 0
-                          ),
-                          onPrevious: () => setActiveImageIndex(
-                            (prev) => prev > 0 ? prev - 1 : images.length - 1
-                          ),
-                          style: {
-                            width: "90%",
-                            position: "relative",
-                            zIndex: 1
-                          },
-                          children: images.map((img, index2) => /* @__PURE__ */ jsxRuntime.jsx(
-                            designSystem.CarouselSlide,
-                            {
-                              label: `${index2 + 1} of ${images.length} slides`,
-                              style: {
-                                height: "100%",
-                                position: "relative",
-                                overflow: "hidden"
-                              },
-                              children: /* @__PURE__ */ jsxRuntime.jsx(
-                                designSystem.Box,
-                                {
-                                  style: {
-                                    cursor: "pointer",
-                                    position: "relative",
-                                    zIndex: 0
+                          children:
+                            images.length === 0
+                              ? /* @__PURE__ */ jsxRuntime.jsx(
+                                  designSystem.Box,
+                                  {
+                                    background: "neutral100",
+                                    padding: 8,
+                                    hasRadius: true,
+                                    style: {
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      minHeight: "300px",
+                                    },
+                                    children: /* @__PURE__ */ jsxRuntime.jsx(
+                                      designSystem.Typography,
+                                      {
+                                        variant: "omega",
+                                        textColor: "neutral600",
+                                        children:
+                                          /* @__PURE__ */ jsxRuntime.jsx(
+                                            Language,
+                                            { id: "noImagesAvailable" },
+                                          ),
+                                      },
+                                    ),
                                   },
-                                  onClick: () => setEnlargedImage(img.url),
+                                )
+                              : /* @__PURE__ */ jsxRuntime.jsx(
+                                  designSystem.CarouselInput,
+                                  {
+                                    label: `Active image (${activeImageIndex + 1}/${images.length})`,
+                                    selectedSlide: activeImageIndex,
+                                    previousLabel: "Previous slide",
+                                    nextLabel: "Next slide",
+                                    onNext: () =>
+                                      setActiveImageIndex((prev) =>
+                                        prev < images.length - 1 ? prev + 1 : 0,
+                                      ),
+                                    onPrevious: () =>
+                                      setActiveImageIndex((prev) =>
+                                        prev > 0 ? prev - 1 : images.length - 1,
+                                      ),
+                                    style: {
+                                      width: "90%",
+                                      position: "relative",
+                                      zIndex: 1,
+                                    },
+                                    children: images.map((img, index2) =>
+                                      /* @__PURE__ */ jsxRuntime.jsx(
+                                        designSystem.CarouselSlide,
+                                        {
+                                          label: `${index2 + 1} of ${images.length} slides`,
+                                          style: {
+                                            height: "100%",
+                                            position: "relative",
+                                            overflow: "hidden",
+                                          },
+                                          children:
+                                            /* @__PURE__ */ jsxRuntime.jsx(
+                                              designSystem.Box,
+                                              {
+                                                style: {
+                                                  cursor: "pointer",
+                                                  position: "relative",
+                                                  zIndex: 0,
+                                                },
+                                                onClick: () =>
+                                                  setEnlargedImage(img.url),
+                                                children:
+                                                  /* @__PURE__ */ jsxRuntime.jsx(
+                                                    designSystem.CarouselImage,
+                                                    {
+                                                      src:
+                                                        img.base64Image ||
+                                                        img.url ||
+                                                        "/placeholder.svg",
+                                                      alt:
+                                                        img.alternativeText ||
+                                                        `Image ${index2 + 1}`,
+                                                      style: {
+                                                        width: "99%",
+                                                        height: "auto",
+                                                        display: "block",
+                                                      },
+                                                    },
+                                                  ),
+                                              },
+                                            ),
+                                        },
+                                        index2,
+                                      ),
+                                    ),
+                                  },
+                                ),
+                        },
+                      ),
+                    }),
+                    /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, {
+                      col: 5,
+                      xs: 12,
+                      children: /* @__PURE__ */ jsxRuntime.jsxs(
+                        designSystem.Box,
+                        {
+                          style: {
+                            width: "100%",
+                            height: "100%",
+                            maxHeight: "500px",
+                          },
+                          children: [
+                            /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Field.Label,
+                              {
+                                children: /* @__PURE__ */ jsxRuntime.jsx(
+                                  Language,
+                                  { id: "prompt" },
+                                ),
+                              },
+                            ),
+                            /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Textarea,
+                              {
+                                ref,
+                                "aria-label": formatMessage({
+                                  id: getTranslation(
+                                    "imagiterate.input.aria-label",
+                                  ),
+                                  defaultMessage: "Imagiterate input",
+                                }),
+                                name: "prompt",
+                                value: prompt,
+                                disabled:
+                                  disabled ||
+                                  isProcessing ||
+                                  images.length === 0,
+                                required,
+                                placeholder:
+                                  placeholder ||
+                                  /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                                    id: "enterAPrompt",
+                                  }),
+                                onChange: handlePromptChange,
+                                rows: embeddedFromWidget ? 7 : 10,
+                                style: { width: "100%" },
+                              },
+                            ),
+                            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                              marginTop: 2,
+                              children: /* @__PURE__ */ jsxRuntime.jsx(
+                                designSystem.Button,
+                                {
+                                  onClick: handleSubmit,
+                                  disabled:
+                                    !prompt.trim() ||
+                                    isProcessing ||
+                                    images.length === 0,
+                                  loading: isProcessing,
                                   children: /* @__PURE__ */ jsxRuntime.jsx(
-                                    designSystem.CarouselImage,
-                                    {
-                                      src: img.base64Image || img.url || "/placeholder.svg",
-                                      alt: img.alternativeText || `Image ${index2 + 1}`,
-                                      style: {
-                                        width: "99%",
-                                        height: "auto",
-                                        display: "block"
-                                      }
-                                    }
-                                  )
-                                }
-                              )
-                            },
-                            index2
-                          ))
-                        }
-                      )
-                    }
-                  ) }),
-                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 5, xs: 12, children: /* @__PURE__ */ jsxRuntime.jsxs(
-                    designSystem.Box,
-                    {
-                      style: { width: "100%", height: "100%", maxHeight: "500px" },
-                      children: [
-                        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Label, { children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "prompt" }) }),
-                        /* @__PURE__ */ jsxRuntime.jsx(
-                          designSystem.Textarea,
-                          {
-                            ref,
-                            "aria-label": formatMessage({
-                              id: getTranslation("imagiterate.input.aria-label"),
-                              defaultMessage: "Imagiterate input"
+                                    Language,
+                                    { id: "submit" },
+                                  ),
+                                },
+                              ),
                             }),
-                            name: "prompt",
-                            value: prompt,
-                            disabled: disabled || isProcessing || images.length === 0,
-                            required,
-                            placeholder: placeholder || /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "enterAPrompt" }),
-                            onChange: handlePromptChange,
-                            rows: embeddedFromWidget ? 7 : 10,
-                            style: { width: "100%" }
-                          }
+                          ],
+                        },
+                      ),
+                    }),
+                  ],
+                }),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {}),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Error, {}),
+              ],
+            }),
+          ],
+        }),
+      }),
+      modalState !== "closed" &&
+        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, {
+          open: true,
+          onOpenChange: handleCloseModal,
+          children: /* @__PURE__ */ jsxRuntime.jsxs(
+            designSystem.Modal.Content,
+            {
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, {
+                  children: /* @__PURE__ */ jsxRuntime.jsxs(
+                    designSystem.Modal.Title,
+                    {
+                      children: [
+                        modalState === "loading" &&
+                          /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                            id: "processingImage",
+                          }),
+                        modalState === "success" &&
+                          /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                            id: "aiModifiedImage",
+                          }),
+                        modalState === "successfulSave" &&
+                          /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                            id: "aiModifiedImage",
+                          }),
+                        modalState === "error" &&
+                          /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                            id: "error",
+                          }),
+                      ],
+                    },
+                  ),
+                }),
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Body, {
+                  children: [
+                    modalState === "loading" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, {
+                            justifyContent: "center",
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsxs(
+                              designSystem.Typography,
+                              {
+                                variant: "omega",
+                                textColor: "neutral600",
+                                children: [
+                                  /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                                    id: "generating",
+                                  }),
+                                  ":",
+                                  " ",
+                                  formatElapsedTime(elapsedTime),
+                                ],
+                              },
+                            ),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Box,
+                              {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "100%",
+                                  height: "300px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              },
+                            ),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                            children: [
+                              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "100%",
+                                  height: "20px",
+                                  marginBottom: "8px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              }),
+                              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                                background: "neutral200",
+                                hasRadius: true,
+                                style: {
+                                  width: "80%",
+                                  height: "20px",
+                                  animation:
+                                    "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                                },
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                    modalState === "success" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsx("img", {
+                              src: resultImage || "/placeholder.svg",
+                              alt: "Modified image",
+                              style: {
+                                width: "100%",
+                                height: "auto",
+                                borderRadius: "4px",
+                              },
+                            }),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsxs(
+                              designSystem.Field.Root,
+                              {
+                                name: "alternativeText",
+                                children: [
+                                  /* @__PURE__ */ jsxRuntime.jsx(
+                                    designSystem.Field.Label,
+                                    {
+                                      children: /* @__PURE__ */ jsxRuntime.jsx(
+                                        Language,
+                                        { id: "alternativeText" },
+                                      ),
+                                    },
+                                  ),
+                                  /* @__PURE__ */ jsxRuntime.jsx(
+                                    designSystem.Field.Input,
+                                    {
+                                      type: "text",
+                                      placeholder: "Enter alternative text",
+                                      value: alternativeText,
+                                      onChange: (e) =>
+                                        setAlternativeText(e.target.value),
+                                    },
+                                  ),
+                                  /* @__PURE__ */ jsxRuntime.jsx(
+                                    designSystem.Field.Hint,
+                                    {
+                                      children: /* @__PURE__ */ jsxRuntime.jsx(
+                                        Language,
+                                        { id: "describeImageForAccessibility" },
+                                      ),
+                                    },
+                                  ),
+                                ],
+                              },
+                            ),
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, {
+                            children: [
+                              /* @__PURE__ */ jsxRuntime.jsxs(
+                                designSystem.Typography,
+                                {
+                                  variant: "sigma",
+                                  fontWeight: "bold",
+                                  marginBottom: 2,
+                                  children: [
+                                    /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                                      id: "yourPrompt",
+                                    }),
+                                    ":",
+                                    " ",
+                                  ],
+                                },
+                              ),
+                              /* @__PURE__ */ jsxRuntime.jsx(
+                                designSystem.Typography,
+                                { variant: "omega", children: prompt },
+                              ),
+                            ],
+                          }),
+                        ],
+                      }),
+                    modalState === "successfulSave" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                        children: /* @__PURE__ */ jsxRuntime.jsx(
+                          designSystem.Box,
+                          {
+                            marginBottom: 4,
+                            children: /* @__PURE__ */ jsxRuntime.jsx(
+                              designSystem.Typography,
+                              {
+                                variant: "delta",
+                                marginBottom: 2,
+                                children: /* @__PURE__ */ jsxRuntime.jsx(
+                                  Language,
+                                  { id: "imageSaved" },
+                                ),
+                              },
+                            ),
+                          },
                         ),
-                        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginTop: 2, children: /* @__PURE__ */ jsxRuntime.jsx(
+                      }),
+                    modalState === "error" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                        children: /* @__PURE__ */ jsxRuntime.jsx(
+                          designSystem.Typography,
+                          {
+                            variant: "omega",
+                            textColor: "danger600",
+                            children: errorMessage,
+                          },
+                        ),
+                      }),
+                  ],
+                }),
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Footer, {
+                  children: [
+                    modalState === "success" &&
+                      /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, {
+                        children: [
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                            variant: "tertiary",
+                            onClick: handleCloseModal,
+                            children: "Dismiss",
+                          }),
+                          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                            onClick: handleSaveImage,
+                            children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                              id: "save",
+                            }),
+                          }),
+                        ],
+                      }),
+                    modalState === "successfulSave" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(jsxRuntime.Fragment, {
+                        children: /* @__PURE__ */ jsxRuntime.jsx(
                           designSystem.Button,
                           {
-                            onClick: handleSubmit,
-                            disabled: !prompt.trim() || isProcessing || images.length === 0,
-                            loading: isProcessing,
-                            children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "submit" })
-                          }
-                        ) })
-                      ]
-                    }
-                  ) })
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {}),
-            /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Error, {})
-          ] })
-        ] }) }),
-        modalState !== "closed" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, { open: true, onOpenChange: handleCloseModal, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Content, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, { children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Title, { children: [
-            modalState === "loading" && /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "processingImage" }),
-            modalState === "success" && /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "aiModifiedImage" }),
-            modalState === "successfulSave" && /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "aiModifiedImage" }),
-            modalState === "error" && /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "error" })
-          ] }) }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Body, { children: [
-            modalState === "loading" && /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, { justifyContent: "center", marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Typography, { variant: "omega", textColor: "neutral600", children: [
-                /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "generating" }),
-                ":",
-                " ",
-                formatElapsedTime(elapsedTime)
-              ] }) }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(
-                designSystem.Box,
-                {
-                  background: "neutral200",
-                  hasRadius: true,
-                  style: {
-                    width: "100%",
-                    height: "300px",
-                    animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                  }
-                }
-              ) }),
-              /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Box,
-                  {
-                    background: "neutral200",
-                    hasRadius: true,
-                    style: {
-                      width: "100%",
-                      height: "20px",
-                      marginBottom: "8px",
-                      animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                    }
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Box,
-                  {
-                    background: "neutral200",
-                    hasRadius: true,
-                    style: {
-                      width: "80%",
-                      height: "20px",
-                      animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                    }
-                  }
-                )
-              ] })
-            ] }),
-            modalState === "success" && /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(
-                "img",
-                {
-                  src: resultImage || "/placeholder.svg",
-                  alt: "Modified image",
-                  style: {
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "4px"
-                  }
-                }
-              ) }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Field.Root, { name: "alternativeText", children: [
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Label, { children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "alternativeText" }) }),
-                /* @__PURE__ */ jsxRuntime.jsx(
-                  designSystem.Field.Input,
-                  {
-                    type: "text",
-                    placeholder: "Enter alternative text",
-                    value: alternativeText,
-                    onChange: (e) => setAlternativeText(e.target.value)
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, { children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "describeImageForAccessibility" }) })
-              ] }) }),
-              /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Box, { children: [
-                /* @__PURE__ */ jsxRuntime.jsxs(
-                  designSystem.Typography,
-                  {
-                    variant: "sigma",
-                    fontWeight: "bold",
-                    marginBottom: 2,
-                    children: [
-                      /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "yourPrompt" }),
-                      ":",
-                      " "
-                    ]
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", children: prompt })
-              ] })
-            ] }),
-            modalState === "successfulSave" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { marginBottom: 4, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", marginBottom: 2, children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "imageSaved" }) }) }) }),
-            modalState === "error" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", textColor: "danger600", children: errorMessage }) })
-          ] }),
-          /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Footer, { children: [
-            modalState === "success" && /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { variant: "tertiary", onClick: handleCloseModal, children: "Dismiss" }),
-              /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { onClick: handleSaveImage, children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "save" }) })
-            ] }),
-            modalState === "successfulSave" && /* @__PURE__ */ jsxRuntime.jsx(jsxRuntime.Fragment, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { variant: "tertiary", onClick: handleCloseModal, children: "Dismiss" }) }),
-            modalState === "error" && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { onClick: handleCloseModal, children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "close" }) })
-          ] })
-        ] }) }),
-        enlargedImage && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, { open: true, onOpenChange: () => setEnlargedImage(null), children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Modal.Content, { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Title, { children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "enlargedImage" }) }) }),
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Body, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, { style: { width: "100%", textAlign: "center" }, children: /* @__PURE__ */ jsxRuntime.jsx(
-            "img",
+                            variant: "tertiary",
+                            onClick: handleCloseModal,
+                            children: "Dismiss",
+                          },
+                        ),
+                      }),
+                    modalState === "error" &&
+                      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, {
+                        onClick: handleCloseModal,
+                        children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                          id: "close",
+                        }),
+                      }),
+                  ],
+                }),
+              ],
+            },
+          ),
+        }),
+      enlargedImage &&
+        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Root, {
+          open: true,
+          onOpenChange: () => setEnlargedImage(null),
+          children: /* @__PURE__ */ jsxRuntime.jsxs(
+            designSystem.Modal.Content,
             {
-              src: enlargedImage,
-              alt: "Enlarged",
-              style: {
-                maxWidth: "100%",
-                maxHeight: "80vh",
-                borderRadius: "4px"
-              }
-            }
-          ) }) }),
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Footer, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { variant: "tertiary", onClick: () => setEnlargedImage(null), children: /* @__PURE__ */ jsxRuntime.jsx(Language, { id: "close" }) }) })
-        ] }) }),
-        /* @__PURE__ */ jsxRuntime.jsx("style", { children: `
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Header, {
+                  children: /* @__PURE__ */ jsxRuntime.jsx(
+                    designSystem.Modal.Title,
+                    {
+                      children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                        id: "enlargedImage",
+                      }),
+                    },
+                  ),
+                }),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Body, {
+                  children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Box, {
+                    style: { width: "100%", textAlign: "center" },
+                    children: /* @__PURE__ */ jsxRuntime.jsx("img", {
+                      src: enlargedImage,
+                      alt: "Enlarged",
+                      style: {
+                        maxWidth: "100%",
+                        maxHeight: "80vh",
+                        borderRadius: "4px",
+                      },
+                    }),
+                  }),
+                }),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Modal.Footer, {
+                  children: /* @__PURE__ */ jsxRuntime.jsx(
+                    designSystem.Button,
+                    {
+                      variant: "tertiary",
+                      onClick: () => setEnlargedImage(null),
+                      children: /* @__PURE__ */ jsxRuntime.jsx(Language, {
+                        id: "close",
+                      }),
+                    },
+                  ),
+                }),
+              ],
+            },
+          ),
+        }),
+      /* @__PURE__ */ jsxRuntime.jsx("style", {
+        children: `
         @keyframes pulse {
           0%, 100% {
             opacity: 1;
@@ -458,21 +726,23 @@ const Input = React.forwardRef((props, ref) => {
             opacity: 0.5;
           }
         }
-      ` })
-      ]
-    }
-  );
+      `,
+      }),
+    ],
+  });
 });
 const toSentenceCase = (str) => {
   if (!str) return "";
-  const withSpaces = str.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]/g, " ");
+  const withSpaces = str
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ");
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 };
 const Language = ({ id }) => {
   const { formatMessage } = reactIntl.useIntl();
   return formatMessage({
     id: getTranslation(`imagiterate.imagiterateField.${id}`),
-    defaultMessage: toSentenceCase(id)
+    defaultMessage: toSentenceCase(id),
   });
 };
 exports.Input = Input;

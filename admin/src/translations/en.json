@@ -13,7 +13,10 @@
   "imagiterate.imagiterateField.error": "Error",
   "imagiterate.imagiterateField.images": "Images",
   "imagiterate.imagiterateField.prompt": "Prompt",
+  "imagiterate.imagiterateField.saving": "Saving...",
+  "imagiterate.imagiterateField.savingImage": "Your image is being saved.",
   "imagiterate.imagiterateField.save": "Save",
   "imagiterate.imagiterateField.submit": "Submit",
-  "imagiterate.imagiterateWidget.enterAPrompt": "Enter a prompt to modify the active image..."
+  "imagiterate.imagiterateWidget.enterAPrompt": "Enter a prompt to modify the active image...",
+  "imagiterate.imagiterateField.uploadAnImage": "Upload an image"
 }

@@ -46,6 +46,7 @@ export const Input = forwardRef((props, ref) => {
   const [enlargedImage, setEnlargedImage] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [modalState, setModalState] = useState("closed");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [resultImage, setResultImage] = useState("");
@@ -178,6 +179,7 @@ export const Input = forwardRef((props, ref) => {
   };
 
   const handleSaveImage = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch("/imagiterate/save-image", {
         method: "POST",
@@ -216,6 +218,8 @@ export const Input = forwardRef((props, ref) => {
       console.error("[v0] Error saving image:", err);
       setErrorMessage("Failed to save image.");
       setModalState("error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -262,7 +266,7 @@ export const Input = forwardRef((props, ref) => {
           <CardBody>
             <Grid.Root
               gap={embeddedFromWidget ? 0 : 4}
-              style={{ alignItems: "stretch", minHeight: "300px" }}
+              style={{ alignItems: "stretch", minHeight: "200px" }}
             >
               {/* Left column: Carousel */}
               <Grid.Item col={7} xs={12}>
@@ -504,6 +508,14 @@ export const Input = forwardRef((props, ref) => {
                 </Box>
               )}
 
+              {isSaving && (
+                <Flex justifyContent="center" alignItems="center" marginTop={4}>
+                  <Typography variant="omega" textColor="neutral600">
+                    <Language id="savingImage" />…
+                  </Typography>
+                </Flex>
+              )}
+
               {modalState === "successfulSave" && (
                 <Box>
                   {/* Result image */}
@@ -529,8 +541,16 @@ export const Input = forwardRef((props, ref) => {
                   <Button variant="tertiary" onClick={handleCloseModal}>
                     Dismiss
                   </Button>
-                  <Button onClick={handleSaveImage}>
-                    <Language id="save" />
+                  <Button
+                    onClick={handleSaveImage}
+                    loading={isSaving}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <Language id="saving" />
+                    ) : (
+                      <Language id="save" />
+                    )}
                   </Button>
                 </>
               )}

@@ -112,7 +112,11 @@ const adminIterate = ({ strapi }) => ({
 
     //	Parse alt text
     let alternativeText = replicateCaption || "Image alt text";
-    alternativeText = alternativeText.replace("Caption:", "").trim().replace(/^([a-z])/, (match) => match.toUpperCase());
+    alternativeText = alternativeText
+      .replace("Caption:", "")
+      .trim()
+      .replace(/^([a-z])/, (match) => match.toUpperCase())
+      .replace(/([^.!?])$/, "$1.");
 
     //	Prepare base64 of the resulting image so that we can show the image in the Strapi admin without CORS errors
     base64Image = await getBase64Image(resultUrl);

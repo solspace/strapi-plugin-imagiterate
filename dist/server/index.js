@@ -91,7 +91,12 @@ const attributes = {
     ]
   },
   token: {
-    type: "string"
+    type: "string",
+    pluginOptions: {
+      admin: {
+        editable: false
+      }
+    }
   },
   AI: {
     type: "customField",
@@ -11090,7 +11095,7 @@ const adminIterate = ({ strapi: strapi2 }) => ({
     if (replicateCaption.error) return replicateCaption;
     console.log("image caption received from Replicate", replicateCaption);
     let alternativeText = replicateCaption || "Image alt text";
-    alternativeText = alternativeText.replace("Caption:", "").trim().replace(/^([a-z])/, (match) => match.toUpperCase());
+    alternativeText = alternativeText.replace("Caption:", "").trim().replace(/^([a-z])/, (match) => match.toUpperCase()).replace(/([^.!?])$/, "$1.");
     base64Image = await getBase64Image$1(resultUrl);
     return { base64Image, url: resultUrl, alternativeText, prompt };
   }
