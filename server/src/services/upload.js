@@ -103,7 +103,9 @@ const getUploadService = () => {
 const getReplicate = () => {
   const token =
     strapi.plugin("imagiterate").config("replicateApiToken") || null;
-  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
+  const model =
+    strapi.plugin("imagiterate").config("replicateImageModel") ||
+    "black-forest-labs/flux-kontext-pro";
 
   if (!token) {
     return {

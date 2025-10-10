@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React, { forwardRef, useState, useEffect, useRef } from "react";
 import { useIntl } from "react-intl";
 import { useField } from "@strapi/strapi/admin";
 import {
@@ -23,7 +23,7 @@ import {
 import { useParams } from "react-router-dom";
 import { getTranslation } from "../utils/getTranslation";
 
-export const Input = React.forwardRef((props, ref) => {
+export const Input = forwardRef((props, ref) => {
   const {
     name,
     hint,
@@ -40,22 +40,23 @@ export const Input = React.forwardRef((props, ref) => {
   const field = useField(name);
   const { formatMessage } = useIntl();
   const { id: documentId } = useParams();
-  const [images, setImages] = React.useState(externalImages);
-  const [embeddedFromWidget, setEmbeddedFromWidget] = React.useState(false);
-  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
-  const [enlargedImage, setEnlargedImage] = React.useState(null);
-  const [prompt, setPrompt] = React.useState("");
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [modalState, setModalState] = React.useState("closed");
-  const [elapsedTime, setElapsedTime] = React.useState(0);
-  const [resultImage, setResultImage] = React.useState("");
-  const [resultImageUrl, setResultImageUrl] = React.useState("");
-  const [resultReasoning, setResultReasoning] = React.useState("");
-  const [errorMessage, setErrorMessage] = React.useState("");
+  const [images, setImages] = useState(externalImages);
+  const [embeddedFromWidget, setEmbeddedFromWidget] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [modalState, setModalState] = useState("closed");
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [resultImage, setResultImage] = useState("");
+  const [resultImageUrl, setResultImageUrl] = useState("");
+  const [alternativeText, setAlternativeText] = useState("");
+  const [resultReasoning, setResultReasoning] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const timerRef = React.useRef(null);
+  const timerRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Set embedded from widget
     setEmbeddedFromWidget(externalImages && externalImages.length > 0);
 
@@ -91,7 +92,7 @@ export const Input = React.forwardRef((props, ref) => {
     if (documentId) fetchDocument();
   }, [documentId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (modalState === "loading") {
       timerRef.current = setInterval(() => {
         setElapsedTime((prev) => prev + 1);
@@ -162,6 +163,7 @@ export const Input = React.forwardRef((props, ref) => {
       const data = await res.json();
       console.log("[v0] Iterate response:", data);
 
+      setAlternativeText(data.alternativeText);
       setResultImageUrl(data.url);
       setResultImage(data.base64Image);
       setResultReasoning(data.reasoning);
@@ -183,7 +185,8 @@ export const Input = React.forwardRef((props, ref) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          documentId: documentId,
+          documentId,
+          alternativeText,
           url: resultImageUrl,
         }),
       });
@@ -198,7 +201,7 @@ export const Input = React.forwardRef((props, ref) => {
       // Add new image to carousel and make it active
       const newImages = [
         ...images,
-        { alternativeText: "", url: resultImageUrl, base64Image: resultImage },
+        { alternativeText, url: resultImageUrl, base64Image: resultImage },
       ];
       setImages(newImages);
       setActiveImageIndex(newImages.length - 1);
@@ -206,6 +209,7 @@ export const Input = React.forwardRef((props, ref) => {
       // Close modal and reset
       setModalState("successfulSave");
       setPrompt("");
+      setAlternativeText("");
       setResultImage("");
       setResultReasoning("");
     } catch (err) {
@@ -218,6 +222,7 @@ export const Input = React.forwardRef((props, ref) => {
   const handleCloseModal = () => {
     setModalState("closed");
     setPrompt("");
+    setAlternativeText("");
     setResultImage("");
     setResultReasoning("");
     setErrorMessage("");
@@ -465,6 +470,24 @@ export const Input = React.forwardRef((props, ref) => {
                         borderRadius: "4px",
                       }}
                     />
+                  </Box>
+
+                  {/* Alternative text */}
+                  <Box marginBottom={4}>
+                    <Field.Root name="alternativeText">
+                      <Field.Label>
+                        <Language id="alternativeText" />
+                      </Field.Label>
+                      <Field.Input
+                        type="text"
+                        placeholder="Enter alternative text"
+                        value={alternativeText}
+                        onChange={(e) => setAlternativeText(e.target.value)}
+                      />
+                      <Field.Hint>
+                        <Language id="describeImageForAccessibility" />
+                      </Field.Hint>
+                    </Field.Root>
                   </Box>
 
                   {/* AI reasoning */}

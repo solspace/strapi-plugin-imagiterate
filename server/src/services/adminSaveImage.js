@@ -4,7 +4,9 @@ import mime from "mime-types";
 
 const adminSaveImage = ({ strapi }) => ({
   async saveImage(ctx) {
-    const { documentId, url } = ctx.request.body;
+    const { alternativeText, documentId, url } = ctx.request.body;
+    
+    console.log('incoming', alternativeText);
 
     //  Do we have a base64 image?
     if (!url) {
@@ -18,7 +20,7 @@ const adminSaveImage = ({ strapi }) => ({
     }
 
     //  Upload to Strapi
-    const newUploadedFile = await uploadImage(url);
+    const newUploadedFile = await uploadImage(url, alternativeText);
     if (newUploadedFile.error) return newUploadedFile;
 
     //  Do we have a document id? We save our images to that document
@@ -64,7 +66,7 @@ const getUploadService = () => {
   return strapi.plugin("upload").service("upload");
 };
 
-async function uploadImage(url) {
+async function uploadImage(url, alternativeText = 'Image alt text') {
   // Instantiate our service
   const uploadService = getUploadService();
 
@@ -107,14 +109,19 @@ async function uploadImage(url) {
     };
 
     strapi.log.info(`Uploading image: ${file.originalFilename}`);
+    console.log('alt text', alternativeText)
 
     // Upload using Strapi's upload service
     const uploadedFile = await uploadService.upload({
-      data: {},
+      data: {
+      	fileInfo: {
+			alternativeText
+      	}
+      },
       files: file,
     });
     if (uploadedFile.error) return uploadedFile;
-    
+
     strapi.log.info(`Uploaded this image: ${file.originalFilename}`);
 
     // Clean up temporary file

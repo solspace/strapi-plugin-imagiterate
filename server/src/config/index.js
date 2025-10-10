@@ -1,7 +1,8 @@
 export default {
   default: ({ env }) => ({
     replicateApiToken: env("REPLICATE_API_TOKEN"),
-    replicateAiModel: env("REPLICATE_AI_MODEL"),
+    replicateImageModel: env("REPLICATE_IMAGE_MODEL"),
+    replicateCaptionModel: env("REPLICATE_CAPTION_MODEL"),
   }),
   validator() {},
 };

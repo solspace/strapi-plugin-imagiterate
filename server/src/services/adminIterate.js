@@ -6,6 +6,7 @@ import { getBase64Image } from "./utils";
 
 const adminIterate = ({ strapi }) => ({
   async refineImage(ctx) {
+    //	Set vars
     const { documentId, prompt, url, token } = ctx.request.body;
 
     //  Do we have a prompt?
@@ -54,12 +55,34 @@ const adminIterate = ({ strapi }) => ({
     return { base64Image, url: randomImage, alt: "Alt text", prompt };
 */
 
-    //  Instantiate Replicate
-    const { replicate, model } = getReplicate();
-    if (replicate.error) return replicate;
+    //  Set token
+    const replicateToken =
+      strapi.plugin("imagiterate").config("replicateApiToken") || null;
+
+    //	Missing token?
+    if (!replicateToken) {
+      return {
+        error: {
+          status: 400,
+          name: "MissingReplicateToken",
+          message:
+            "Please provide a valid API token for the Replicate AI service.",
+        },
+      };
+    }
+
+    //	Instantiate Replicate
+    const replicate = new Replicate({
+      auth: replicateToken,
+    });
+
+    //	Set image model
+    let model =
+      strapi.plugin("imagiterate").config("replicateImageModel") ||
+      "black-forest-labs/flux-kontext-pro";
 
     //  Now send it to Replicate for processing.
-    const input = {
+    let input = {
       input_image: base64Image || url,
       prompt,
     };
@@ -68,58 +91,40 @@ const adminIterate = ({ strapi }) => ({
     //  Error?
     if (output.error) return output;
 
+    //	Set url
     const replicateUrl = await output.url();
 
     // Normalize to a plain string
     const resultUrl =
       typeof replicateUrl === "string" ? replicateUrl : replicateUrl.href;
 
-    console.log("image received from Replicate", resultUrl);
+    // Set caption model
+    model =
+      strapi.plugin("imagiterate").config("replicateCaptionModel") ||
+      "salesforce/blip:2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746";
+
+    //	Get caption from Replicate
+    input = { image: resultUrl };
+    const replicateCaption = await replicate.run(model, { input });
+    if (replicateCaption.error) return replicateCaption;
+
+    console.log("image caption received from Replicate", replicateCaption);
+
+    //	Parse alt text
+    let alternativeText = replicateCaption || "Image alt text";
+    alternativeText = alternativeText.replace("Caption:", "").trim().replace(/^([a-z])/, (match) => match.toUpperCase());
 
     //	Prepare base64 of the resulting image so that we can show the image in the Strapi admin without CORS errors
     base64Image = await getBase64Image(resultUrl);
 
-    return { base64Image, url: resultUrl, alt: "Alt text", prompt };
+    //	Return
+    return { base64Image, url: resultUrl, alternativeText, prompt };
   },
 });
 
 //  Service loader
 const getUploadService = () => {
   return strapi.plugin("upload").service("upload");
-};
-
-//  Replicate api loader for clean error handling
-const getReplicate = () => {
-  const token =
-    strapi.plugin("imagiterate").config("replicateApiToken") || null;
-  const model = strapi.plugin("imagiterate").config("replicateAiModel") || null;
-
-  if (!token) {
-    return {
-      error: {
-        status: 400,
-        name: "MissingReplicateToken",
-        message:
-          "Please provide a valid API token for the Replicate AI service.",
-      },
-    };
-  }
-
-  if (!model) {
-    return {
-      error: {
-        status: 400,
-        name: "MissingReplicateApiModel",
-        message: "Please provide a valid model for the Replicate AI service.",
-      },
-    };
-  }
-
-  const replicate = new Replicate({
-    auth: token,
-  });
-
-  return { replicate, model };
 };
 
 async function uploadImage(file) {
