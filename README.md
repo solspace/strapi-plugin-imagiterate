@@ -4,10 +4,10 @@ Prompt an AI to iterate on uploaded images and save them to Strapi's backend.
 
 ## Features
 
-- Opens up the world of AI image editing to end users
+- Opens up the world of AI image editing to Strapi users
 - Streamlines AI editing of images
-- Saves iterative results in Strapi for later
-- Use saved image iterations as normal Strapi content types
+- Saves iterative results in Strapi
+- Use saved image iterations as normal Strapi content and media types
 
 ## Installation
 
@@ -25,19 +25,24 @@ npm install @solspace/strapi-plugin-imagiterate
 ```
 
 ## How it works
+This plugin has an interface within the Strapi Admin Panel as well as API endpoints for use in your websites.
 
-This plugin exposes two Strapi API endpoints, one for initial image uploads and another for subsequent image iterations.
+### Strapi Admin Panel
+This plugin creates an AI image editing interface in the Strapi Admin Panel. You can find it as a widget in your Strapi home screen or as a custom field in the Imagiterate Uploads Collection.
+
+Users can iterate on images and save their work as Strapi Media Assets. The plugin also generates alternative text for images using AI.
+
+### API Endpoints
+This plugin also exposes two Strapi API endpoints, one for initial image uploads and another for subsequent image iterations.
 
 Developers can build front-end applications that consume this API and allow users to upload an image along with an editing prompt. The AI modifies the image and returns the modified version through the API. The developer's front-end application can then allow the user to provide further editing prompts to iterate on subsequent modified images.
 
 All image uploads and modifications are saved to the Strapi back-end in the Imagiterate Uploads collection. The images are saved as Strapi Media Library records attached to a main collection entry.
 
 ## Requirements
-
 This plugin is optimized for and currently uses the AI image editing service provider [Replicate](https://replicate.com/).
 
 - **Required:** A valid Replicate API token with valid billing credits attached to it.
-- **Required:** A valid Replicate model. We recommend [black-forest-labs/flux-kontext-pro](https://replicate.com/black-forest-labs/flux-kontext-pro).
 - **Required:** Appropriate permissions on the Imagiterate Strapi plugin API endpoints.
 
 ## Configuration
@@ -52,6 +57,9 @@ REPLICATE_API_TOKEN=r8_HrsCGGANKqOTmmJQhsbpIHBNMBOfHwz9JMaiQ
 
 # Replicate AI Model
 REPLICATE_AI_MODEL=black-forest-labs/flux-kontext-pro
+
+# Replicate Caption Model
+REPLICATE_CAPTION_MODEL=salesforce/blip:2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746
 ```
 
 2. Then set up your Strapi plugins config file to use those values. Note the addition of { env} as a function argument. And make sure you merge these config values in with whatever other plugins you are also running.
@@ -65,6 +73,7 @@ export default ({ env }) => ({
 		config: {
 		  replicateApiToken: env('REPLICATE_API_TOKEN'),
 		  replicateAiModel: env('REPLICATE_AI_MODEL'),
+		  replicateCaptionModel: env('REPLICATE_CAPTION_MODEL'),
 		},
 	},
 });
