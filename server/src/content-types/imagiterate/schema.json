@@ -33,7 +33,7 @@
       "allowedTypes": ["images"]
     },
     "token": {
-      "type": "string"
+      "type": "string",
     },
     "AI": {
       "type": "customField",

@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React, { forwardRef, useState, useEffect, useRef } from "react";
 import { useIntl } from "react-intl";
 import { useField } from "@strapi/strapi/admin";
 import {
@@ -25,7 +25,7 @@ import { getTranslation } from "../utils/getTranslation";
 import { useStrapiApp } from "@strapi/strapi/admin";
 import { Eye } from "lucide-react";
 
-export const Input = React.forwardRef((props, ref) => {
+export const Input = forwardRef((props, ref) => {
   const {
     name,
     hint,
@@ -42,28 +42,33 @@ export const Input = React.forwardRef((props, ref) => {
   const field = useField(name);
   const { formatMessage } = useIntl();
   const { id: documentId } = useParams();
-  const components = useStrapiApp("ImagiterateInput", (state) => state.components);
-  const MediaLibraryDialog = components && components["media-library"]; 
-  const [images, setImages] = React.useState(externalImages);
-  const [embeddedFromWidget, setEmbeddedFromWidget] = React.useState(false);
-  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
-  const [enlargedImage, setEnlargedImage] = React.useState(null);
-  const [prompt, setPrompt] = React.useState("");
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [modalState, setModalState] = React.useState("closed");
-  const [elapsedTime, setElapsedTime] = React.useState(0);
-  const [resultImage, setResultImage] = React.useState("");
-  const [resultImageUrl, setResultImageUrl] = React.useState("");
-  const [resultReasoning, setResultReasoning] = React.useState("");
-  const [errorMessage, setErrorMessage] = React.useState("");
-  const [hoveredIndex, setHoveredIndex] = React.useState(null);
-  const [savedAssetId, setSavedAssetId] = React.useState(null);
-  const [savedAssetUrl, setSavedAssetUrl] = React.useState("");
-  const [isMediaLibraryOpen, setIsMediaLibraryOpen] = React.useState(false);
+  const components = useStrapiApp(
+    "ImagiterateInput",
+    (state) => state.components,
+  );
+  const MediaLibraryDialog = components && components["media-library"];
+  const [images, setImages] = useState(externalImages);
+  const [embeddedFromWidget, setEmbeddedFromWidget] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [prompt, setPrompt] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [modalState, setModalState] = useState("closed");
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [resultImage, setResultImage] = useState("");
+  const [resultImageUrl, setResultImageUrl] = useState("");
+  const [alternativeText, setAlternativeText] = useState("");
+  const [resultReasoning, setResultReasoning] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [savedAssetId, setSavedAssetId] = useState(null);
+  const [savedAssetUrl, setSavedAssetUrl] = useState("");
+  const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
 
-  const timerRef = React.useRef(null);
+  const timerRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Set embedded from widget
     setEmbeddedFromWidget(externalImages && externalImages.length > 0);
 
@@ -99,7 +104,7 @@ export const Input = React.forwardRef((props, ref) => {
     if (documentId) fetchDocument();
   }, [documentId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (modalState === "loading") {
       timerRef.current = setInterval(() => {
         setElapsedTime((prev) => prev + 1);
@@ -170,6 +175,7 @@ export const Input = React.forwardRef((props, ref) => {
       const data = await res.json();
       console.log("[v0] Iterate response:", data);
 
+      setAlternativeText(data.alternativeText);
       setResultImageUrl(data.url);
       setResultImage(data.base64Image);
       setResultReasoning(data.reasoning);
@@ -184,6 +190,7 @@ export const Input = React.forwardRef((props, ref) => {
   };
 
   const handleSaveImage = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch("/imagiterate/save-image", {
         method: "POST",
@@ -191,7 +198,8 @@ export const Input = React.forwardRef((props, ref) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          documentId: documentId,
+          documentId,
+          alternativeText,
           url: resultImageUrl,
         }),
       });
@@ -211,7 +219,12 @@ export const Input = React.forwardRef((props, ref) => {
       // Add new image to carousel and make it active
       const newImages = [
         ...images,
-        { id: uploadedId, alternativeText: "", url: uploadedUrl, base64Image: resultImage },
+        {
+          id: uploadedId,
+          alternativeText,
+          url: uploadedUrl,
+          base64Image: resultImage,
+        },
       ];
       setImages(newImages);
       setActiveImageIndex(newImages.length - 1);
@@ -219,6 +232,7 @@ export const Input = React.forwardRef((props, ref) => {
       // Close modal and reset
       setModalState("successfulSave");
       setPrompt("");
+      setAlternativeText("");
       setResultImage("");
       setResultReasoning("");
       setSavedAssetId(uploadedId);
@@ -227,6 +241,8 @@ export const Input = React.forwardRef((props, ref) => {
       console.error("[v0] Error saving image:", err);
       setErrorMessage("Failed to save image.");
       setModalState("error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -240,9 +256,17 @@ export const Input = React.forwardRef((props, ref) => {
     }
     const nextImages = [...images];
     assets.forEach((a) => {
-      const url = a.url || a?.formats?.medium?.url || a?.formats?.small?.url || a?.formats?.thumbnail?.url;
+      const url =
+        a.url ||
+        a?.formats?.medium?.url ||
+        a?.formats?.small?.url ||
+        a?.formats?.thumbnail?.url;
       if (url) {
-        nextImages.unshift({ id: a.id, alternativeText: a.alternativeText || a.name || "", url });
+        nextImages.unshift({
+          id: a.id,
+          alternativeText: a.alternativeText || a.name || "",
+          url,
+        });
       }
     });
     setImages(nextImages);
@@ -253,6 +277,7 @@ export const Input = React.forwardRef((props, ref) => {
   const handleCloseModal = () => {
     setModalState("closed");
     setPrompt("");
+    setAlternativeText("");
     setResultImage("");
     setResultReasoning("");
     setErrorMessage("");
@@ -273,7 +298,7 @@ export const Input = React.forwardRef((props, ref) => {
       required={required}
     >
       <Flex direction="column" alignItems="stretch" gap={1}>
-        <Card style={{ border: 'none', boxShadow: 'none' }}>
+        <Card style={{ border: "none", boxShadow: "none" }}>
           {!embeddedFromWidget && (
             <>
               <CardHeader>
@@ -301,113 +326,126 @@ export const Input = React.forwardRef((props, ref) => {
                   marginRight: embeddedFromWidget ? 0 : 16,
                 }}
               >
-                  <Flex gap={2} marginBottom={2} wrap="wrap">
-                    <Button variant="tertiary" onClick={openMediaLibrary}>
-                      <Language id="chooseFromLibrary" />
-                    </Button>
-                  </Flex>
-                  {images.length === 0 ? (
-                    <Box
-                      background="neutral100"
-                      padding={8}
-                      hasRadius
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Typography variant="omega" textColor="neutral600">
-                        <Language id="noImagesAvailable" />
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <CarouselInput
-                      label={`Active image (${activeImageIndex + 1}/${images.length})`}
-                      selectedSlide={activeImageIndex}
-                      previousLabel="Previous slide"
-                      nextLabel="Next slide"
-                      onNext={() =>
-                        setActiveImageIndex((prev) =>
-                          prev < images.length - 1 ? prev + 1 : 0,
-                        )
-                      }
-                      onPrevious={() =>
-                        setActiveImageIndex((prev) =>
-                          prev > 0 ? prev - 1 : images.length - 1,
-                        )
-                      }
-                      // remove actions to drop the edit/link/delete/publish bar
-                      style={{
-                        width: "90%",
-                        position: "relative",
-                        zIndex: 1,
-                      }}
-                    >
-                      {images.map((img, index) => (
-                        <CarouselSlide
-                          key={index}
-                          label={`${index + 1} of ${images.length} slides`}
+                <Flex gap={2} marginBottom={2} wrap="wrap">
+                  <Button variant="tertiary" onClick={openMediaLibrary}>
+                    <Language id="chooseFromLibrary" />
+                  </Button>
+                </Flex>
+                {images.length === 0 ? (
+                  <Box
+                    background="neutral100"
+                    padding={8}
+                    hasRadius
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="omega" textColor="neutral600">
+                      <Language id="noImagesAvailable" />
+                    </Typography>
+                  </Box>
+                ) : (
+                  <CarouselInput
+                    label={`Active image (${activeImageIndex + 1}/${images.length})`}
+                    selectedSlide={activeImageIndex}
+                    previousLabel="Previous slide"
+                    nextLabel="Next slide"
+                    onNext={() =>
+                      setActiveImageIndex((prev) =>
+                        prev < images.length - 1 ? prev + 1 : 0,
+                      )
+                    }
+                    onPrevious={() =>
+                      setActiveImageIndex((prev) =>
+                        prev > 0 ? prev - 1 : images.length - 1,
+                      )
+                    }
+                    // remove actions to drop the edit/link/delete/publish bar
+                    style={{
+                      width: "90%",
+                      position: "relative",
+                      zIndex: 1,
+                    }}
+                  >
+                    {images.map((img, index) => (
+                      <CarouselSlide
+                        key={index}
+                        label={`${index + 1} of ${images.length} slides`}
+                        style={{
+                          height: "100%",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
                           style={{
-                            height: "100%",
+                            cursor: "pointer",
                             position: "relative",
-                            overflow: "hidden",
+                            zIndex: 0,
+                            width: "170px",
+                            height: "160px",
                           }}
+                          onClick={() => setEnlargedImage(img.url)}
+                          onMouseEnter={() => setHoveredIndex(index)}
+                          onMouseLeave={() => setHoveredIndex(null)}
                         >
+                          <CarouselImage
+                            src={
+                              img.base64Image || img.url || "/placeholder.svg"
+                            }
+                            alt={img.alternativeText || `Image ${index + 1}`}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "contain",
+                              display: "block",
+                              filter:
+                                hoveredIndex === index
+                                  ? "brightness(0.7)"
+                                  : "none",
+                            }}
+                          />
+                          {/* Hover overlay with view icon */}
                           <Box
                             style={{
-                              cursor: "pointer",
-                              position: "relative",
-                              zIndex: 0,
-                              width: "170px",
-                              height: "160px",
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              pointerEvents: "none",
+                              color: "white",
+                              opacity: hoveredIndex === index ? 1 : 0,
+                              transition: "opacity 150ms ease",
                             }}
-                            onClick={() => setEnlargedImage(img.url)}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
                           >
-                            <CarouselImage
-                              src={
-                                img.base64Image || img.url || "/placeholder.svg"
-                              }
-                              alt={img.alternativeText || `Image ${index + 1}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                                display: "block",
-                                filter: hoveredIndex === index ? "brightness(0.7)" : "none",
-                              }}
-                            />
-                            {/* Hover overlay with view icon */}
-                            <Box
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                pointerEvents: "none",
-                                color: "white",
-                                opacity: hoveredIndex === index ? 1 : 0,
-                                transition: "opacity 150ms ease",
-                              }}
-                            >
-                              <Eye size={28} color="#ffffff" aria-hidden />
-                            </Box>
+                            <Eye size={28} color="#ffffff" aria-hidden />
                           </Box>
-                        </CarouselSlide>
-                      ))}
-                    </CarouselInput>
-                  )}
-                </Box>
+                        </Box>
+                      </CarouselSlide>
+                    ))}
+                  </CarouselInput>
+                )}
+              </Box>
 
               {/* Right: prompt takes remaining width */}
-              <Box style={{ flex: 1, minWidth: 0, height: "100%", maxHeight: "300px", display: "flex", flexDirection: "column", width: "100%" }}>
+              <Box
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  height: "100%",
+                  maxHeight: "300px",
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%",
+                }}
+              >
                 <Field.Label>
                   <Language id="prompt" />
                 </Field.Label>
@@ -463,7 +501,7 @@ export const Input = React.forwardRef((props, ref) => {
               {modalState === "loading" && (
                 <Box>
                   {/* Timer */}
-                  <Flex justifyContent="center" marginBottom={4}>
+                  <Flex style={{ justifyContent: "center" }} marginBottom={4}>
                     <Typography variant="omega" textColor="neutral600">
                       <Language id="generating" />:{" "}
                       {formatElapsedTime(elapsedTime)}
@@ -524,6 +562,24 @@ export const Input = React.forwardRef((props, ref) => {
                     />
                   </Box>
 
+                  {/* Alternative text */}
+                  <Box marginBottom={4}>
+                    <Field.Root name="alternativeText">
+                      <Field.Label>
+                        <Language id="alternativeText" />
+                      </Field.Label>
+                      <Field.Input
+                        type="text"
+                        placeholder="Enter alternative text"
+                        value={alternativeText}
+                        onChange={(e) => setAlternativeText(e.target.value)}
+                      />
+                      <Field.Hint>
+                        <Language id="describeImageForAccessibility" />
+                      </Field.Hint>
+                    </Field.Root>
+                  </Box>
+
                   {/* AI reasoning */}
                   <Box>
                     <Typography
@@ -536,6 +592,17 @@ export const Input = React.forwardRef((props, ref) => {
                     <Typography variant="omega">{prompt}</Typography>
                   </Box>
                 </Box>
+              )}
+
+              {isSaving && (
+                <Flex
+                  style={{ alignItems: "center", justifyContent: "center" }}
+                  marginTop={4}
+                >
+                  <Typography variant="omega" textColor="neutral600">
+                    <Language id="savingImage" />…
+                  </Typography>
+                </Flex>
               )}
 
               {modalState === "successfulSave" && (
@@ -573,9 +640,6 @@ export const Input = React.forwardRef((props, ref) => {
                         </Button>
                       ) : null}
                     </Flex>
-                    {savedAssetId ? (
-                      <Typography variant="pi" textColor="neutral600" marginTop={3}>ID: {savedAssetId}</Typography>
-                    ) : null}
                   </Box>
                 </Box>
               )}
@@ -594,8 +658,16 @@ export const Input = React.forwardRef((props, ref) => {
                   <Button variant="tertiary" onClick={handleCloseModal}>
                     Dismiss
                   </Button>
-                  <Button onClick={handleSaveImage}>
-                    <Language id="save" />
+                  <Button
+                    onClick={handleSaveImage}
+                    loading={isSaving}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <Language id="saving" />
+                    ) : (
+                      <Language id="save" />
+                    )}
                   </Button>
                 </>
               )}
@@ -625,7 +697,14 @@ export const Input = React.forwardRef((props, ref) => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Box style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <img
                   src={enlargedImage}
                   alt="Enlarged"
