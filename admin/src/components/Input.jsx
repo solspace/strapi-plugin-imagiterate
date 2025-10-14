@@ -22,6 +22,8 @@ import {
 } from "@strapi/design-system";
 import { useParams } from "react-router-dom";
 import { getTranslation } from "../utils/getTranslation";
+import { useStrapiApp } from "@strapi/strapi/admin";
+import { Eye } from "lucide-react";
 
 export const Input = React.forwardRef((props, ref) => {
   const {
@@ -40,6 +42,8 @@ export const Input = React.forwardRef((props, ref) => {
   const field = useField(name);
   const { formatMessage } = useIntl();
   const { id: documentId } = useParams();
+  const components = useStrapiApp("ImagiterateInput", (state) => state.components);
+  const MediaLibraryDialog = components && components["media-library"]; 
   const [images, setImages] = React.useState(externalImages);
   const [embeddedFromWidget, setEmbeddedFromWidget] = React.useState(false);
   const [activeImageIndex, setActiveImageIndex] = React.useState(0);
@@ -52,6 +56,10 @@ export const Input = React.forwardRef((props, ref) => {
   const [resultImageUrl, setResultImageUrl] = React.useState("");
   const [resultReasoning, setResultReasoning] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
+  const [savedAssetId, setSavedAssetId] = React.useState(null);
+  const [savedAssetUrl, setSavedAssetUrl] = React.useState("");
+  const [isMediaLibraryOpen, setIsMediaLibraryOpen] = React.useState(false);
 
   const timerRef = React.useRef(null);
 
@@ -195,10 +203,15 @@ export const Input = React.forwardRef((props, ref) => {
       const savedImage = await res.json();
       console.log("[v0] Saved image:", savedImage);
 
+      // savedImage can be an array (upload service returns array)
+      const saved = Array.isArray(savedImage) ? savedImage[0] : savedImage;
+      const uploadedUrl = saved?.url || resultImageUrl;
+      const uploadedId = saved?.id || null;
+
       // Add new image to carousel and make it active
       const newImages = [
         ...images,
-        { alternativeText: "", url: resultImageUrl, base64Image: resultImage },
+        { id: uploadedId, alternativeText: "", url: uploadedUrl, base64Image: resultImage },
       ];
       setImages(newImages);
       setActiveImageIndex(newImages.length - 1);
@@ -208,11 +221,33 @@ export const Input = React.forwardRef((props, ref) => {
       setPrompt("");
       setResultImage("");
       setResultReasoning("");
+      setSavedAssetId(uploadedId);
+      setSavedAssetUrl(uploadedUrl || "");
     } catch (err) {
       console.error("[v0] Error saving image:", err);
       setErrorMessage("Failed to save image.");
       setModalState("error");
     }
+  };
+
+  // Native Strapi Media Library flow (via helper-plugin)
+  const openMediaLibrary = () => setIsMediaLibraryOpen(true);
+  const closeMediaLibrary = () => setIsMediaLibraryOpen(false);
+  const handleSelectAssets = (assets) => {
+    if (!assets || assets.length === 0) {
+      setIsMediaLibraryOpen(false);
+      return;
+    }
+    const nextImages = [...images];
+    assets.forEach((a) => {
+      const url = a.url || a?.formats?.medium?.url || a?.formats?.small?.url || a?.formats?.thumbnail?.url;
+      if (url) {
+        nextImages.unshift({ id: a.id, alternativeText: a.alternativeText || a.name || "", url });
+      }
+    });
+    setImages(nextImages);
+    setActiveImageIndex(0);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleCloseModal = () => {
@@ -238,7 +273,7 @@ export const Input = React.forwardRef((props, ref) => {
       required={required}
     >
       <Flex direction="column" alignItems="stretch" gap={1}>
-        <Card>
+        <Card style={{ border: 'none', boxShadow: 'none' }}>
           {!embeddedFromWidget && (
             <>
               <CardHeader>
@@ -255,19 +290,22 @@ export const Input = React.forwardRef((props, ref) => {
           )}
 
           <CardBody>
-            <Grid.Root
-              gap={embeddedFromWidget ? 0 : 4}
-              style={{ alignItems: "stretch", minHeight: "300px" }}
-            >
-              {/* Left column: Carousel */}
-              <Grid.Item col={7} xs={12}>
-                <Box
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxHeight: "500px",
-                  }}
-                >
+            <Flex gap={0} alignItems="stretch" style={{ width: "100%" }}>
+              {/* Left: fixed image column */}
+              <Box
+                style={{
+                  width: 236,
+                  minWidth: 236,
+                  flex: "0 0 236px",
+                  maxHeight: "300px",
+                  marginRight: embeddedFromWidget ? 0 : 16,
+                }}
+              >
+                  <Flex gap={2} marginBottom={2} wrap="wrap">
+                    <Button variant="tertiary" onClick={openMediaLibrary}>
+                      <Language id="chooseFromLibrary" />
+                    </Button>
+                  </Flex>
                   {images.length === 0 ? (
                     <Box
                       background="neutral100"
@@ -278,7 +316,6 @@ export const Input = React.forwardRef((props, ref) => {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        minHeight: "300px",
                       }}
                     >
                       <Typography variant="omega" textColor="neutral600">
@@ -323,8 +360,12 @@ export const Input = React.forwardRef((props, ref) => {
                               cursor: "pointer",
                               position: "relative",
                               zIndex: 0,
+                              width: "170px",
+                              height: "160px",
                             }}
                             onClick={() => setEnlargedImage(img.url)}
+                            onMouseEnter={() => setHoveredIndex(index)}
+                            onMouseLeave={() => setHoveredIndex(null)}
                           >
                             <CarouselImage
                               src={
@@ -332,56 +373,72 @@ export const Input = React.forwardRef((props, ref) => {
                               }
                               alt={img.alternativeText || `Image ${index + 1}`}
                               style={{
-                                width: "99%",
-                                height: "auto",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
                                 display: "block",
+                                filter: hoveredIndex === index ? "brightness(0.7)" : "none",
                               }}
                             />
+                            {/* Hover overlay with view icon */}
+                            <Box
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                pointerEvents: "none",
+                                color: "white",
+                                opacity: hoveredIndex === index ? 1 : 0,
+                                transition: "opacity 150ms ease",
+                              }}
+                            >
+                              <Eye size={28} color="#ffffff" aria-hidden />
+                            </Box>
                           </Box>
                         </CarouselSlide>
                       ))}
                     </CarouselInput>
                   )}
                 </Box>
-              </Grid.Item>
 
-              {/* Right column: Prompt */}
-              <Grid.Item col={5} xs={12}>
-                <Box
-                  style={{ width: "100%", height: "100%", maxHeight: "500px" }}
-                >
-                  <Field.Label>
-                    <Language id="prompt" />
-                  </Field.Label>
-                  <Textarea
-                    ref={ref}
-                    aria-label={formatMessage({
-                      id: getTranslation("imagiterate.input.aria-label"),
-                      defaultMessage: "Imagiterate input",
-                    })}
-                    name="prompt"
-                    value={prompt}
-                    disabled={disabled || isProcessing || images.length === 0}
-                    required={required}
-                    placeholder={placeholder || <Language id="enterAPrompt" />}
-                    onChange={handlePromptChange}
-                    rows={embeddedFromWidget ? 7 : 10}
-                    style={{ width: "100%" }}
-                  />
-                  <Box marginTop={2}>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={
-                        !prompt.trim() || isProcessing || images.length === 0
-                      }
-                      loading={isProcessing}
-                    >
-                      <Language id="submit" />
-                    </Button>
-                  </Box>
+              {/* Right: prompt takes remaining width */}
+              <Box style={{ flex: 1, minWidth: 0, height: "100%", maxHeight: "300px", display: "flex", flexDirection: "column", width: "100%" }}>
+                <Field.Label>
+                  <Language id="prompt" />
+                </Field.Label>
+                <Textarea
+                  ref={ref}
+                  aria-label={formatMessage({
+                    id: getTranslation("imagiterate.input.aria-label"),
+                    defaultMessage: "Imagiterate input",
+                  })}
+                  name="prompt"
+                  value={prompt}
+                  disabled={disabled || isProcessing || images.length === 0}
+                  required={required}
+                  placeholder={placeholder || <Language id="enterAPrompt" />}
+                  onChange={handlePromptChange}
+                  rows={embeddedFromWidget ? 7 : 10}
+                  style={{ width: "100%", maxWidth: "100%", marginTop: 8 }}
+                />
+                <Box marginTop={2}>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={
+                      !prompt.trim() || isProcessing || images.length === 0
+                    }
+                    loading={isProcessing}
+                  >
+                    <Language id="submit" />
+                  </Button>
                 </Box>
-              </Grid.Item>
-            </Grid.Root>
+              </Box>
+            </Flex>
 
             <Field.Hint />
             <Field.Error />
@@ -488,6 +545,37 @@ export const Input = React.forwardRef((props, ref) => {
                     <Typography variant="delta" marginBottom={2}>
                       <Language id="imageSaved" />
                     </Typography>
+                    <Flex gap={2} wrap="wrap" marginTop={3} marginBottom={3}>
+                      <Button
+                        variant="tertiary"
+                        onClick={() => {
+                          const origin = window.location?.origin || "";
+                          const url = `${origin}/admin/plugins/upload?sort=createdAt:DESC&page=1&pageSize=1`;
+                          window.open(url, "_blank");
+                        }}
+                      >
+                        Open Assets
+                      </Button>
+                      {savedAssetUrl ? (
+                        <Button
+                          variant="tertiary"
+                          onClick={() => {
+                            try {
+                              const origin = window.location?.origin || "";
+                              const fullUrl = savedAssetUrl.startsWith("http")
+                                ? savedAssetUrl
+                                : `${origin}${savedAssetUrl}`;
+                              navigator.clipboard?.writeText(fullUrl);
+                            } catch {}
+                          }}
+                        >
+                          Copy URL
+                        </Button>
+                      ) : null}
+                    </Flex>
+                    {savedAssetId ? (
+                      <Typography variant="pi" textColor="neutral600" marginTop={3}>ID: {savedAssetId}</Typography>
+                    ) : null}
                   </Box>
                 </Box>
               )}
@@ -537,7 +625,7 @@ export const Input = React.forwardRef((props, ref) => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Box style={{ width: "100%", textAlign: "center" }}>
+              <Box style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <img
                   src={enlargedImage}
                   alt="Enlarged"
@@ -545,6 +633,7 @@ export const Input = React.forwardRef((props, ref) => {
                     maxWidth: "100%",
                     maxHeight: "80vh",
                     borderRadius: "4px",
+                    display: "block",
                   }}
                 />
               </Box>
@@ -556,6 +645,16 @@ export const Input = React.forwardRef((props, ref) => {
             </Modal.Footer>
           </Modal.Content>
         </Modal.Root>
+      )}
+
+      {isMediaLibraryOpen && MediaLibraryDialog && (
+        <MediaLibraryDialog
+          onClose={closeMediaLibrary}
+          onSelectAssets={handleSelectAssets}
+          onAddAssets={handleSelectAssets}
+          multiple
+          allowedTypes={["images"]}
+        />
       )}
 
       <style>{`

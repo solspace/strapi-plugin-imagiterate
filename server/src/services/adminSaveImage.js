@@ -49,8 +49,8 @@ const adminSaveImage = ({ strapi }) => ({
         });
       if (update.error) return update;
 
-      //	Return
-      return imageDocument;
+      //	Return the newly uploaded file so the UI can link to it
+      return newUploadedFile;
     }
 
     if (!documentId) {
