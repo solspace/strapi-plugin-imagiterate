@@ -43,7 +43,6 @@ All image uploads and modifications are saved to the Strapi back-end in the Imag
 This plugin is optimized for and currently uses the AI image editing service provider [Replicate](https://replicate.com/).
 
 - **Required:** A valid Replicate API token with valid billing credits attached to it.
-- **Required:** Appropriate permissions on the Imagiterate Strapi plugin API endpoints.
 
 ## Configuration
 
@@ -81,7 +80,7 @@ export default ({ env }) => ({
 
 ## Permissions
 
-Access and permissions for Imagiterate API endpoints is managed through Strapi. You can create a dedicated API token in Strapi and use that in your API calls. Enable both `iterate` and `upload` controller actions.
+When you choose to use the Imagiterate API, access and permissions for Imagiterate API endpoints is managed through Strapi. You can create a dedicated API token in Strapi and use that in your API calls. Enable both `iterate` and `upload` controller actions.
 
 It is strongly recommended that you not enable API access through User & Permissions Plugin Roles.
 
