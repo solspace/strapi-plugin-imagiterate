@@ -17,7 +17,6 @@ const ImagiterateWidget2 = () => {
       });
 
       const images = await res.json();
-      console.log("[v0] Document images:", images);
 
       if (images.error) {
         setError("No images were found");
