@@ -364,9 +364,9 @@ export const Input = forwardRef((props, ref) => {
               {/* Left: fixed image column */}
               <Box
                 style={{
-                  width: 300,
-                  minWidth: 300,
-                  flex: "0 0 300px",
+                  width: 340,
+                  minWidth: 340,
+                  flex: "0 0 340px",
                   maxHeight: "300px",
                   marginRight: embeddedFromWidget ? 0 : 16,
                 }}
@@ -374,6 +374,15 @@ export const Input = forwardRef((props, ref) => {
                 <Flex gap={2} marginBottom={2} wrap="wrap">
                   <Button variant="tertiary" onClick={openMediaLibrary}>
                     <Language id="chooseFromLibrary" />
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    onClick={() => setShowGenerateModal(true)}
+                    startIcon={isGenerating ? undefined : <Wand2 size={16} />}
+                    loading={isGenerating}
+                    disabled={isProcessing || isGenerating}
+                  >
+                    {isGenerating ? "Generating..." : "Generate Image"}
                   </Button>
                 </Flex>
                 {images.length === 0 ? (
@@ -410,7 +419,7 @@ export const Input = forwardRef((props, ref) => {
                     }
                     // remove actions to drop the edit/link/delete/publish bar
                     style={{
-                      width: "90%",
+                      width: "93%",
                       position: "relative",
                       zIndex: 1,
                     }}
@@ -519,22 +528,6 @@ export const Input = forwardRef((props, ref) => {
                   >
                     <Language id="submit" />
                   </Button>
-                </Box>
-                <Box marginTop={2}>
-                  <Flex alignItems="center" gap={2}>
-                    <Typography variant="pi" textColor="neutral600">
-                      or
-                    </Typography>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowGenerateModal(true)}
-                      startIcon={isGenerating ? undefined : <Wand2 size={16} />}
-                      loading={isGenerating}
-                      disabled={isProcessing || isGenerating}
-                    >
-                      {isGenerating ? "Generating..." : "Generate Image"}
-                    </Button>
-                  </Flex>
                 </Box>
               </Box>
             </Flex>
