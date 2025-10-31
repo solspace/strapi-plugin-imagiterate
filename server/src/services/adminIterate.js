@@ -21,21 +21,13 @@ const adminIterate = ({ strapi }) => ({
       };
     }
 
-    //  Do we have an image url?
-    if (!url) {
-      return {
-        error: {
-          status: 400,
-          name: "MissingImageUrl",
-          message: "Please provide an image url for the AI to process.",
-        },
-      };
-    }
+    //  For generation (no input image), url is optional
+    const isGeneration = !url;
 
     //	If the image url is relative, we need to generate a base64 version to send to Replicate
     let base64Image;
 
-    if (!url.startsWith("http")) {
+    if (!isGeneration && !url.startsWith("http")) {
       base64Image = await getBase64Image(url);
       if (base64Image.error) {
         return base64Image;
@@ -69,10 +61,20 @@ const adminIterate = ({ strapi }) => ({
       "black-forest-labs/flux-kontext-pro";
 
     //  Now send it to Replicate for processing.
-    let input = {
-      input_image: base64Image || url,
-      prompt,
-    };
+    let input;
+    if (isGeneration) {
+      // For generation, just use the prompt
+      input = { prompt };
+      // Use generation model if configured
+      model = strapi.plugin("imagiterate").config("replicateGenerateModel") || model;
+    } else {
+      // For iteration, use image + prompt
+      input = {
+        input_image: base64Image || url,
+        prompt,
+      };
+    }
+    
     const output = await replicate.run(model, { input });
 
     //  Error?

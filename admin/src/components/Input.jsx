@@ -23,7 +23,7 @@ import {
 import { useParams } from "react-router-dom";
 import { getTranslation } from "../utils/getTranslation";
 import { useStrapiApp } from "@strapi/strapi/admin";
-import { Eye } from "lucide-react";
+import { Eye, Wand2 } from "lucide-react";
 
 export const Input = forwardRef((props, ref) => {
   const {
@@ -65,6 +65,10 @@ export const Input = forwardRef((props, ref) => {
   const [savedAssetId, setSavedAssetId] = useState(null);
   const [savedAssetUrl, setSavedAssetUrl] = useState("");
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generatePrompt, setGeneratePrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
 
   const timerRef = useRef(null);
 
@@ -84,8 +88,6 @@ export const Input = forwardRef((props, ref) => {
           },
         );
         const data = await res.json();
-        console.log("[v0] Document data:", data);
-
         // Build images array: originalImage first, then images array
         const imagesList = [];
         if (data.originalImage) {
@@ -209,8 +211,6 @@ export const Input = forwardRef((props, ref) => {
       }
 
       const savedImage = await res.json();
-      console.log("[v0] Saved image:", savedImage);
-
       // savedImage can be an array (upload service returns array)
       const saved = Array.isArray(savedImage) ? savedImage[0] : savedImage;
       const uploadedUrl = saved?.url || resultImageUrl;
@@ -281,7 +281,52 @@ export const Input = forwardRef((props, ref) => {
     setResultImage("");
     setResultReasoning("");
     setErrorMessage("");
+    setGeneratedPrompt(""); // Clear generated prompt
   };
+
+  const handleGenerateImage = async () => {
+    if (!generatePrompt.trim()) return;
+
+    setIsGenerating(true);
+    setModalState("loading");
+    setElapsedTime(0);
+
+    try {
+      const res = await fetch("/imagiterate/admin-iterate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: generatePrompt,
+          // No url = generation mode
+        }),
+      });
+
+      const result = await res.json();
+      
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to generate image");
+      }
+
+      // Use existing modal system (same as iterate)
+      setAlternativeText(result.alternativeText);
+      setResultImageUrl(result.url);
+      setResultImage(result.base64Image);
+      setResultReasoning(result.reasoning);
+      setGeneratedPrompt(generatePrompt); // Store the prompt for display
+      setModalState("success");
+      setGeneratePrompt("");
+      setShowGenerateModal(false);
+    } catch (err) {
+      console.error("Error generating image:", err);
+      setErrorMessage(err instanceof Error ? err.message : "An error occurred");
+      setModalState("error");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   const formatElapsedTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -319,9 +364,9 @@ export const Input = forwardRef((props, ref) => {
               {/* Left: fixed image column */}
               <Box
                 style={{
-                  width: 236,
-                  minWidth: 236,
-                  flex: "0 0 236px",
+                  width: 340,
+                  minWidth: 340,
+                  flex: "0 0 340px",
                   maxHeight: "300px",
                   marginRight: embeddedFromWidget ? 0 : 16,
                 }}
@@ -329,6 +374,15 @@ export const Input = forwardRef((props, ref) => {
                 <Flex gap={2} marginBottom={2} wrap="wrap">
                   <Button variant="tertiary" onClick={openMediaLibrary}>
                     <Language id="chooseFromLibrary" />
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    onClick={() => setShowGenerateModal(true)}
+                    startIcon={isGenerating ? undefined : <Wand2 size={16} />}
+                    loading={isGenerating}
+                    disabled={isProcessing || isGenerating}
+                  >
+                    {isGenerating ? "Generating..." : "Generate Image"}
                   </Button>
                 </Flex>
                 {images.length === 0 ? (
@@ -365,7 +419,7 @@ export const Input = forwardRef((props, ref) => {
                     }
                     // remove actions to drop the edit/link/delete/publish bar
                     style={{
-                      width: "90%",
+                      width: "93%",
                       position: "relative",
                       zIndex: 1,
                     }}
@@ -461,7 +515,7 @@ export const Input = forwardRef((props, ref) => {
                   required={required}
                   placeholder={placeholder || <Language id="enterAPrompt" />}
                   onChange={handlePromptChange}
-                  rows={embeddedFromWidget ? 7 : 10}
+                  rows={embeddedFromWidget ? 5 : 6}
                   style={{ width: "100%", maxWidth: "100%", marginTop: 8 }}
                 />
                 <Box marginTop={2}>
@@ -589,7 +643,7 @@ export const Input = forwardRef((props, ref) => {
                     >
                       <Language id="yourPrompt" />:{" "}
                     </Typography>
-                    <Typography variant="omega">{prompt}</Typography>
+                    <Typography variant="omega">{generatedPrompt || prompt}</Typography>
                   </Box>
                 </Box>
               )}
@@ -734,6 +788,47 @@ export const Input = forwardRef((props, ref) => {
           multiple
           allowedTypes={["images"]}
         />
+      )}
+
+      {/* Generate Image Modal */}
+      {showGenerateModal && (
+        <Modal.Root open onOpenChange={() => setShowGenerateModal(false)}>
+          <Modal.Content>
+            <Modal.Header>
+              <Modal.Title>
+                Generate Image with AI
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Box padding={2}>
+                <Typography variant="pi" textColor="neutral600" marginBottom={3}>
+                  Describe the image you want to create
+                </Typography>
+                <Textarea
+                  placeholder="A beautiful sunset over mountains with a lake reflection..."
+                  value={generatePrompt}
+                  onChange={(e) => setGeneratePrompt(e.target.value)}
+                  rows={4}
+                />
+              </Box>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                onClick={() => setShowGenerateModal(false)}
+                variant="tertiary"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleGenerateImage}
+                disabled={!generatePrompt.trim() || isGenerating}
+                loading={isGenerating}
+              >
+                Generate
+              </Button>
+            </Modal.Footer>
+          </Modal.Content>
+        </Modal.Root>
       )}
 
       <style>{`
